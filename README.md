@@ -2,11 +2,11 @@
 
 **A 100% Rust, local-first GitHub replacement built for AI agents.**
 
-Jeryu is your own forge on localhost — repositories, pull requests, checks, CI,
+Jeryu is a self-hosted forge — repositories, pull requests, checks, CI,
 reviews, gated merges, and releases — with agents as first-class users. It
-speaks GitHub's REST dialect (the real `gh` CLI works against it), runs your
-CI on your own hardware, and pushes merged work back to GitHub when you want a
-public mirror.
+speaks GitHub's REST dialect (the real `gh` CLI works against it) and runs your
+CI on your own hardware. The Jeryu family itself is developed on the hosted
+forge at **https://git.neverhuman.org**.
 
 ## Highlights
 
@@ -17,8 +17,8 @@ public mirror.
 - **Full PR lifecycle** — branch protection, required status checks, reviews,
   linear-history gating, and a merge endpoint that refuses to move `main`
   without green checks (`main` only advances through gated merges).
-- **GitHub-compatible REST edge** — point `gh`, scripts, or CI at
-  `http://127.0.0.1:8787` and they work.
+- **GitHub-compatible REST edge** — point `gh`, scripts, or CI at your
+  forge's URL (for the family itself, `https://git.neverhuman.org`).
 - **Local CI, your runners** — workflows compile to an IR and run host-native
   or in containers; adversarial suites (sandbox-escape and cache-poisoning
   matrices) guard the substrate itself.
@@ -27,14 +27,18 @@ public mirror.
   and MCP tools served straight from your forge.
 - **Signed releases** — SHA256SUMS, cosign signatures, SBOMs, provenance, and
   rollback evidence.
-- **Direct GitHub mirroring** — merging into `main` pushes the new tip to
-  `github.com/<your-org>` automatically; the outcome is recorded as a
-  `jeryu/github-mirror` check-run next to your CI.
+- **GitHub mirroring (not yet working)** — the forge can try to push the new
+  `main` tip to `github.com/<your-org>` after each merge and record the result
+  as a `jeryu/github-mirror` check-run. A failed push never blocks the merge.
+  On the family's own host no mirror push has succeeded yet, so the
+  `github.com/neverhuman/*` copies are stale. Use `git.neverhuman.org` as the
+  source of truth.
 
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/neverhuman/jeryu/main/scripts/install.sh | bash
+git clone https://git.neverhuman.org/git/jeryu/jeryu.git
+bash jeryu/scripts/install.sh
 ```
 
 Pin a release or install somewhere else:
@@ -50,10 +54,12 @@ releases, verifies `SHA256SUMS`, and runs cosign verification when
 
 ## Quickstart
 
-```bash
-jeryu serve --bind 127.0.0.1:8787
-# then open http://127.0.0.1:8787 — repos, PRs, checks, and agent sessions
-```
+The family's live forge is https://git.neverhuman.org. Open it in a browser
+for repos, PRs, checks, and agent sessions, or point `gh` and scripts at it.
+Git remotes use the form `https://git.neverhuman.org/git/jeryu/<repo>.git`.
+
+To run your own forge, start `jeryu serve` behind your own hostname and point
+clients at that URL.
 
 ## Clone The Split Family
 
@@ -61,10 +67,15 @@ Product source lives in the split member repositories; this portal carries the
 installer, the clone entrypoint, and audit metadata. To hack on Jeryu itself:
 
 ```bash
-git clone https://github.com/neverhuman/jeryu.git
+git clone https://git.neverhuman.org/git/jeryu/jeryu.git
 cd jeryu
 scripts/clone-family.sh "$HOME/jeryu-split"
 ```
+
+`clone-family.sh` still clones the members from the `github_slug` remotes
+listed in the manifest. Those GitHub copies are stale (see GitHub mirroring
+above). Until the script is switched over, re-point each member with
+`git remote set-url origin https://git.neverhuman.org/git/jeryu/<repo>.git`.
 
 Existing checkouts are updated with `git fetch` and `git pull --ff-only`.
 The portal repository is skipped by default so the command can be run from an
@@ -72,7 +83,7 @@ already-cloned portal checkout.
 
 ## Split Repository Map
 
-| Repository | Role | GitHub | Purpose |
+| Repository | Role | GitHub slug (stale mirror) | Purpose |
 | --- | --- | --- | --- |
 | `jeryu` | Public portal | `neverhuman/jeryu` | Public portal, installer, and split-family clone entrypoint. |
 | `jeryu-core` | Split member | `neverhuman/jeryu-core` | Forge/domain truth, git storage, read models, TUI, durable DB migrations. |
