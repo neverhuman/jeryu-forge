@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# shellcheck source=lib/install-target.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/install-target.sh"
+
 repo="neverhuman/jeryu-deploy"
 version="${JERYU_VERSION:-latest}"
 install_dir="${JERYU_INSTALL_DIR:-${HOME}/.jeryu/bin}"
@@ -46,6 +49,6 @@ else
   printf 'cosign not found; SHA256SUMS verification completed\n' >&2
 fi
 
-mkdir -p "$install_dir"
-install -m 0755 "${tmp}/jeryu" "${install_dir}/jeryu"
+chmod 0755 "${tmp}/jeryu"
+install_jeryu_binary "${tmp}/jeryu" "$install_dir"
 printf 'installed jeryu to %s\n' "${install_dir}/jeryu"
