@@ -5,10 +5,6 @@ on:
   push:
     branches: [main]
 
-env:
-  # BEGIN GENERATED JANKURAI WORKFLOW PIN — DO NOT EDIT
-  # No Jankurai identity is pinned here; see ops/ci/lib.sh require_jankurai.
-  # END GENERATED JANKURAI WORKFLOW PIN
 
 permissions:
   contents: read
