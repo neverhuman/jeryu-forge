@@ -8,7 +8,6 @@ set -euo pipefail
 # from the receipt. The one pin of record is jeryu-tool's tool-manifest.toml.
 # END GENERATED JANKURAI PIN
 
-
 require_jankurai() {
   # Verify the governed Jankurai auditor installed on this host. The installed
   # binary and its content-addressed installation receipt are the identity:
