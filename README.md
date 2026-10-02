@@ -125,6 +125,6 @@ Apache-2.0 — see [LICENSE](LICENSE).
 
 ## Governed auditor
 
-CI invokes only the receipt-verified `/home/ubuntu/.jeryu/bin/jankurai` identity
+CI invokes only the receipt-verified `~/.jeryu/bin/jankurai` identity
 rendered by `jeryu-tool`. The 1.6.11 auditor cutover is CI authority only; it
 does not change this repository's product version, release tag, or artifacts.
