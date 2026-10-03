@@ -271,13 +271,12 @@ onboarded = true
 mirror_github_main = true
 current_tag = "jeryu-intelligence-v5.0.0-split.0"
 required_check = "jeryu-intelligence/required"
-note = "Codegraph, RustJet, MCP intelligence, review, and autonomy analysis."
+note = "Codegraph, RustJet, MCP intelligence, and autonomy analysis."
 cargo_members = [
   "crates/jeryu-codegraph",
   "crates/jeryu-rustjet",
   "crates/jeryu-rustjet-cli",
   "crates/jeryu-mcp",
-  "crates/jeryu-review",
   "crates/jeryu-autonomy",
 ]
 copy_paths = [
@@ -285,7 +284,6 @@ copy_paths = [
   "crates/jeryu-rustjet",
   "crates/jeryu-rustjet-cli",
   "crates/jeryu-mcp",
-  "crates/jeryu-review",
   "crates/jeryu-autonomy",
   "fixtures/rust-small",
   "docs/codegraph-oracle.md",
@@ -298,7 +296,6 @@ source_paths = [
   "crates/jeryu-rustjet/**",
   "crates/jeryu-rustjet-cli/**",
   "crates/jeryu-mcp/**",
-  "crates/jeryu-review/**",
   "crates/jeryu-autonomy/**",
   "fixtures/rust-small/**",
   "docs/codegraph-oracle.md",
