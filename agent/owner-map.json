@@ -22,14 +22,12 @@
     "ops/": "ops",
     "ops/ci/**": "ops",
     "ops/git-hooks/": "ops",
-    "repos.manifest.toml": "split",
     "rust-toolchain.toml": "workspace",
     "scripts/": "ops",
     "scripts/**": "ops",
     "tools/": "ops",
     "tests/": "tests",
     "ops/ci/": "ops",
-    "ops/split/": "split",
     "ops/AGENTS.md": "ops"
   },
   "workspace": "jeryu"

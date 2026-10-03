@@ -105,11 +105,6 @@
       "lane": "ci",
       "purpose": "verify pre-push gates delegate to local CI lanes"
     },
-    "repos.manifest.toml": {
-      "command": "just check && just score",
-      "lane": "check",
-      "purpose": "verify split manifest remains parseable and routed"
-    },
     "rust-toolchain.toml": {
       "command": "just check",
       "lane": "check",
@@ -134,11 +129,6 @@
       "command": "just fast && just check && just score",
       "lane": "ci",
       "purpose": "verify local CI wrappers are reproducible and audit-visible"
-    },
-    "ops/split/": {
-      "command": "just check && just score",
-      "lane": "check",
-      "purpose": "verify split-family tooling parses and stays routed"
     },
     "scripts/": {
       "command": "just check",

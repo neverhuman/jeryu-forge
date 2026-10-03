@@ -12,4 +12,4 @@ cargo_members = [
 ]
 
 [python]
-allowed_non_product_paths = ["ops/split/"]
+allowed_non_product_paths = ["scripts/lib/"]

@@ -72,10 +72,12 @@ cd jeryu
 scripts/clone-family.sh "$HOME/jeryu-split"
 ```
 
-`clone-family.sh` still clones the members from the `github_slug` remotes
-listed in the manifest. Those GitHub copies are stale (see GitHub mirroring
-above). Until the script is switched over, re-point each member with
-`git remote set-url origin https://git.neverhuman.org/git/jeryu/<repo>.git`.
+`clone-family.sh` clones `jeryu-release-ops` first, then every member listed
+in the family authority manifest it carries,
+`jeryu-release-ops/repos.manifest.toml`, from the forge remote the authority
+records for each one. This portal keeps no copy of that manifest; point
+`JERYU_SPLIT_MANIFEST` at an authority copy you already have to skip the
+bootstrap clone, and `JERYU_FORGE_BASE` at another forge to bootstrap from it.
 
 Existing checkouts are updated with `git fetch` and `git pull --ff-only`.
 The portal repository is skipped by default so the command can be run from an
@@ -83,17 +85,22 @@ already-cloned portal checkout.
 
 ## Split Repository Map
 
-| Repository | Role | GitHub slug (stale mirror) | Purpose |
-| --- | --- | --- | --- |
-| `jeryu` | Public portal | `neverhuman/jeryu` | Public portal, installer, and split-family clone entrypoint. |
-| `jeryu-core` | Split member | `neverhuman/jeryu-core` | Forge/domain truth, git storage, read models, TUI, durable DB migrations. |
-| `jeryu-ci-runner` | Split member | `neverhuman/jeryu-ci-runner` | CI IR, scheduler, runner fabric, workcells, sandboxing, agent execution substrate. |
-| `jeryu-cache` | Split member | `neverhuman/jeryu-cache` | JeryuCache policy, CAS, receipts, and adversarial poisoning tests. |
-| `jeryu-intelligence` | Split member | `neverhuman/jeryu-intelligence` | Codegraph, RustJet, MCP intelligence, review, and autonomy analysis. |
-| `jeryu-jira` | Split member | `neverhuman/jeryu-jira` | Work Tracker model, SQLite store, generated contracts, and issue bridge DTOs. |
-| `jeryu-web` | Split member | `neverhuman/jeryu-web` | Vite/React/TypeScript app, rendered UX QA, and generated contract mirror. |
-| `jeryu-release-ops` | Split member | `neverhuman/jeryu-release-ops` | Release, signing, governance, observability, and compliance tooling. |
-| `jeryu-deploy` | Split member | `neverhuman/jeryu-deploy` | Integration, end-user binary build, split lock, and release bundle logic. |
+| Repository | Role | Purpose |
+| --- | --- | --- |
+| `jeryu` | Public portal | Public portal, installer, and split-family clone entrypoint. |
+| `jeryu-release-ops` | Control plane | Family authority manifest, release, signing, governance, observability, and compliance tooling. |
+| `jeryu-core` | Split member | Forge/domain truth, git storage, read models, TUI, durable DB migrations. |
+| `jeryu-ci-runner` | Split member | CI IR, scheduler, runner fabric, workcells, sandboxing, agent execution substrate. |
+| `jeryu-cache` | Split member | JeryuCache policy, CAS, receipts, and adversarial poisoning tests. |
+| `jeryu-intelligence` | Split member | Codegraph, RustJet, MCP intelligence, review, and autonomy analysis. |
+| `jeryu-jira` | Split member | Work Tracker model, SQLite store, generated contracts, and issue bridge DTOs. |
+| `jeryu-web` | Split member | Vite/React/TypeScript app, rendered UX QA, and generated contract mirror. |
+| `jeryu-deploy` | Split member | Integration, end-user binary build, split lock, and release bundle logic. |
+| `jeryu-tool` | Split member | Audit control plane: auditor pin manifest, generator, host installer, default policy, tool catalog. |
+| `jeryu-tool-finder` | Split member | Cross-repo tool discovery: scans the family for duplicated code and proposes tools into `jeryu-tool`. |
+
+The family list of record is `required_repos` in
+`jeryu-release-ops/repos.manifest.toml`; this table follows it.
 
 The release authority is `neverhuman/jeryu-deploy`. Cross-repo Rust
 dependencies are pinned `*-v5.0.0-split.0` git tags; see `docs/architecture.md`

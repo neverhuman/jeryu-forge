@@ -2,8 +2,9 @@
 
 `neverhuman/jeryu-deploy` publishes all signed release artifacts.
 
-Version source is `VERSION` plus the split tag recorded in
-`repos.manifest.toml` when present. Release notes are recorded in
+Version source is `VERSION` plus the split tag this repository is recorded
+under in the family authority manifest,
+`jeryu-release-ops/repos.manifest.toml`. Release notes are recorded in
 `CHANGELOG.md`.
 
 ## Release Gate
