@@ -184,10 +184,8 @@ require_jankurai() {
        .build.network_scope ==
          "local-forge-source-plus-closed-vendor-network-none" and
        .governance.status == $governance and
-       (.governance.manifest_repo ==
-          "https://git.neverhuman.org/git/jeryu/jeryu-tool.git" or
-        .governance.manifest_repo ==
-          "http://127.0.0.1:8787/git/jeryu/jeryu-tool.git") and
+       .governance.manifest_repo ==
+         "https://git.neverhuman.org/git/jeryu/jeryu-tool.git" and
        (.governance.manifest_commit | test("^[0-9a-f]{40}$")) and
        (.governance.manifest_tree | test("^[0-9a-f]{40}$")) and
        (.governance.manifest_sha256 | test("^[0-9a-f]{64}$")) and
