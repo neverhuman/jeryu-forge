@@ -15,7 +15,9 @@ concurrency:
 
 jobs:
   local:
-    runs-on: ubuntu-latest
+    # The org pool is the ephemeral lan-ci runners. ubuntu-latest did not pick
+    # up this workflow, and those runners do not have the host jankurai install.
+    runs-on: [self-hosted, linux, x64, lan-ci]
     timeout-minutes: 45
     steps:
       - name: Checkout
