@@ -1,0 +1,11 @@
+{
+  "rule": "credential_not_in_workspace",
+  "report": {
+    "symlink_follows_destination": false,
+    "token_in_log": false,
+    "token_in_capsule": false,
+    "paths": [
+      "export/.agent-home/config"
+    ]
+  }
+}

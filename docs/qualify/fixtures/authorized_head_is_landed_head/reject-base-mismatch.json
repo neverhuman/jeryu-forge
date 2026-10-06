@@ -1,0 +1,9 @@
+{
+  "rule": "authorized_head_is_landed_head",
+  "report": {
+    "authorized_head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "resolved_head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "authorized_base": "cccccccccccccccccccccccccccccccccccccccc",
+    "resolved_base": "dddddddddddddddddddddddddddddddddddddddd"
+  }
+}

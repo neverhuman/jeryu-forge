@@ -1,0 +1,6 @@
+{
+  "rule": "remote_allowlist",
+  "report": {
+    "remote": "https://git.neverhuman.org.evil.example/jeryu.git"
+  }
+}

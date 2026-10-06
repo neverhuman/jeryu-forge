@@ -1,0 +1,9 @@
+{
+  "rule": "family_lock_pins_oids",
+  "report": {
+    "members": {
+      "jeryu-core": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "jeryu-deploy": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  }
+}

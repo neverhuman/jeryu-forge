@@ -1,0 +1,13 @@
+{
+  "rule": "credential_not_in_workspace",
+  "report": {
+    "symlink_follows_destination": false,
+    "token_in_log": false,
+    "token_in_capsule": true,
+    "paths": [
+      "workspace/src/main.rs",
+      "workspace/id_rsa.txt",
+      "notes/not-id_ed25519"
+    ]
+  }
+}

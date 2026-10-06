@@ -1,0 +1,31 @@
+{
+  "rule": "rustflags_order_preserved",
+  "report": {
+    "pairs": [
+      {
+        "left": {
+          "rustflags": [
+            "-C",
+            "opt-level=2"
+          ],
+          "features": [
+            "b",
+            "a"
+          ]
+        },
+        "right": {
+          "rustflags": [
+            "-C",
+            "opt-level=2"
+          ],
+          "features": [
+            "a",
+            "b"
+          ]
+        },
+        "rustflags_key_equal": true,
+        "features_key_equal": false
+      }
+    ]
+  }
+}

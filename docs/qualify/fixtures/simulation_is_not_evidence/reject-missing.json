@@ -1,0 +1,13 @@
+{
+  "rule": "simulation_is_not_evidence",
+  "report": {
+    "author": "agent-a",
+    "evidence": [
+      {
+        "required": true,
+        "state": "missing",
+        "producer": "reviewer-b"
+      }
+    ]
+  }
+}

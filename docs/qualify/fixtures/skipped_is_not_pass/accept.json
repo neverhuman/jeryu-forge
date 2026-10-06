@@ -1,0 +1,8 @@
+{
+  "rule": "skipped_is_not_pass",
+  "report": {
+    "required": true,
+    "result": "pass",
+    "tests_collected": 3
+  }
+}

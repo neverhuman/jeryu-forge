@@ -1,0 +1,6 @@
+{
+  "rule": "rustflags_order_preserved",
+  "report": {
+    "pairs": []
+  }
+}

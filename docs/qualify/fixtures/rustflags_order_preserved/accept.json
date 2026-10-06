@@ -1,0 +1,60 @@
+{
+  "rule": "rustflags_order_preserved",
+  "report": {
+    "pairs": [
+      {
+        "left": {
+          "rustflags": [
+            "-C",
+            "opt-level=3",
+            "-C",
+            "opt-level=3"
+          ],
+          "features": [
+            "serde",
+            "tokio",
+            "serde"
+          ]
+        },
+        "right": {
+          "rustflags": [
+            "-C",
+            "opt-level=3"
+          ],
+          "features": [
+            "tokio",
+            "serde"
+          ]
+        },
+        "rustflags_key_equal": false,
+        "features_key_equal": true
+      },
+      {
+        "left": {
+          "rustflags": [
+            "-C",
+            "link-arg=-Wl,-z,relro",
+            "--cfg",
+            "feature=\"a\""
+          ],
+          "features": [
+            "z"
+          ]
+        },
+        "right": {
+          "rustflags": [
+            "--cfg",
+            "feature=\"a\"",
+            "-C",
+            "link-arg=-Wl,-z,relro"
+          ],
+          "features": [
+            "z"
+          ]
+        },
+        "rustflags_key_equal": false,
+        "features_key_equal": true
+      }
+    ]
+  }
+}
