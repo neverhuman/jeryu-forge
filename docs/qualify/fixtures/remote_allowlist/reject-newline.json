@@ -1,0 +1,6 @@
+{
+  "rule": "remote_allowlist",
+  "report": {
+    "remote": "https://git.neverhuman.org/jeryu.git\n--upload-pack=touch"
+  }
+}
