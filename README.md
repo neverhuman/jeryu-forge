@@ -38,19 +38,30 @@ forge at **https://git.neverhuman.org**.
 
 ```bash
 git clone https://git.neverhuman.org/git/jeryu/jeryu.git
-bash jeryu/scripts/install.sh
+JERYU_VERSION=jeryu-v5.0.0-split.0 bash jeryu/scripts/install.sh
 ```
 
-Pin a release or install somewhere else:
+The installer only installs a release it can verify: it downloads the `jeryu`
+binary and its `jeryu.sig` and `jeryu.pem`, checks `SHA256SUMS`, and then has
+cosign verify the signature against one exact signer identity on the release
+tag. An unpinned `JERYU_VERSION` (`latest` or empty), a release published
+without its signature assets, no cosign, a cosign run that reports no verified
+signature, and any other signer are each refused, and nothing is installed.
+
+Where releases come from and who may sign them are site values, read from
+`$JERYU_RELEASE_CONFIG` (default `~/.config/jeryu/release.env`) or the
+environment:
 
 ```bash
-JERYU_VERSION=jeryu-v5.0.0-split.0 JERYU_INSTALL_DIR="$HOME/.local/bin" \
-  bash scripts/install.sh
+JERYU_RELEASE_BASE_URL='https://releases.example.invalid/jeryu/{version}'
+JERYU_RELEASE_SIGNER_IDENTITY='https://ci.example.invalid/jeryu-releases/.gitea/workflows/release.yml@refs/tags/{version}'
+JERYU_RELEASE_OIDC_ISSUER='https://oidc.example.invalid'
 ```
 
-The installer downloads the `jeryu` binary from `neverhuman/jeryu-deploy`
-releases, verifies `SHA256SUMS`, and runs cosign verification when
-`jeryu.sig`, `jeryu.pem`, and `cosign` are available.
+`{version}` is replaced with the release tag, so the signer identity names that
+tag's ref: a signature made from a branch is not a release signature and is
+refused. `JERYU_INSTALL_DIR` chooses where the binary lands (default
+`~/.jeryu/bin`).
 
 ## Quickstart
 

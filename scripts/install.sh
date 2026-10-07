@@ -1,20 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+lib="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib"
 # shellcheck source=lib/install-target.sh
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/install-target.sh"
+source "${lib}/install-target.sh"
+# shellcheck source=lib/release-verify.sh
+source "${lib}/release-verify.sh"
 
-repo="neverhuman/jeryu-deploy"
-version="${JERYU_VERSION:-latest}"
+# Site values (where releases come from, who may sign them, which issuer
+# vouches for that signer) live in configuration, not here.
+config="${JERYU_RELEASE_CONFIG:-${HOME}/.config/jeryu/release.env}"
+if [[ -r "$config" ]]; then
+  # shellcheck disable=SC1090 # a site's own configuration, read at install time
+  source "$config"
+fi
+
+version="$(jeryu_release_version "${JERYU_VERSION-}")"
+base="$(jeryu_release_base_url "$version")"
 install_dir="${JERYU_INSTALL_DIR:-${HOME}/.jeryu/bin}"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
-
-if [[ "$version" == "latest" ]]; then
-  base="https://github.com/${repo}/releases/latest/download"
-else
-  base="https://github.com/${repo}/releases/download/${version}"
-fi
 
 download() {
   local name="$1"
@@ -23,6 +28,10 @@ download() {
 
 download jeryu
 download SHA256SUMS
+# A release missing its signature assets is refused by the verification below,
+# which says why, rather than here by curl's exit status.
+download jeryu.sig || :
+download jeryu.pem || :
 
 (
   cd "$tmp"
@@ -33,22 +42,8 @@ download SHA256SUMS
   sha256sum --check --ignore-missing SHA256SUMS
 )
 
-if command -v cosign >/dev/null 2>&1; then
-  sig_ok=0
-  if curl -fL --retry 3 --retry-delay 2 -o "${tmp}/jeryu.sig" "${base}/jeryu.sig"; then
-    if curl -fL --retry 3 --retry-delay 2 -o "${tmp}/jeryu.pem" "${base}/jeryu.pem"; then
-      sig_ok=1
-    fi
-  fi
-  if [[ "$sig_ok" == "1" ]]; then
-    cosign verify-blob       --signature "${tmp}/jeryu.sig"       --certificate "${tmp}/jeryu.pem"       --certificate-identity-regexp "https://github.com/${repo}/.*release.yml@.*"       --certificate-oidc-issuer "https://token.actions.githubusercontent.com"       "${tmp}/jeryu"
-  else
-    printf 'cosign assets unavailable; SHA256SUMS verification completed\n' >&2
-  fi
-else
-  printf 'cosign not found; SHA256SUMS verification completed\n' >&2
-fi
+jeryu_verify_release "${tmp}/jeryu" "${tmp}/jeryu.sig" "${tmp}/jeryu.pem" "$version"
 
 chmod 0755 "${tmp}/jeryu"
 install_jeryu_binary "${tmp}/jeryu" "$install_dir"
-printf 'installed jeryu to %s\n' "${install_dir}/jeryu"
+printf 'installed jeryu %s to %s\n' "$version" "${install_dir}/jeryu"
