@@ -56,6 +56,7 @@ environment:
 JERYU_RELEASE_BASE_URL='https://releases.example.invalid/jeryu/{version}'
 JERYU_RELEASE_SIGNER_IDENTITY='https://ci.example.invalid/jeryu-releases/.gitea/workflows/release.yml@refs/tags/{version}'
 JERYU_RELEASE_OIDC_ISSUER='https://oidc.example.invalid'
+JERYU_GIT_REMOTE_ALLOWLIST='git.example.invalid/git'
 ```
 
 `{version}` is replaced with the release tag, so the signer identity names that
@@ -90,7 +91,16 @@ records for each one. This portal keeps no copy of that manifest; point
 `JERYU_SPLIT_MANIFEST` at an authority copy you already have to skip the
 bootstrap clone, and `JERYU_FORGE_BASE` at another forge to bootstrap from it.
 
-Existing checkouts are updated with `git fetch` and `git pull --ff-only`.
+Every remote is parsed and allowlisted before it reaches `git`. A clone or a
+fetch happens only for an `https` url whose host and first path segment match an
+entry of `JERYU_GIT_REMOTE_ALLOWLIST` (`host/segment`, separated by whitespace
+or commas) exactly, read from the same configuration as the values above. An
+unconfigured allowlist refuses everything; so do userinfo, an explicit port, a
+`.` or `..` or percent-encoded path segment, a control character, a leading dash
+and the `ssh`, `http` and `file` schemes.
+
+Existing checkouts are updated with `git fetch` and `git pull --ff-only`, after
+the url their own `origin` carries is checked the same way.
 The portal repository is skipped by default so the command can be run from an
 already-cloned portal checkout.
 

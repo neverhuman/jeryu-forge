@@ -8,6 +8,16 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/.." && pwd)"
 source "${script_dir}/lib/split-manifest.sh"
+# shellcheck source=lib/git-remote.sh
+source "${script_dir}/lib/git-remote.sh"
+
+# Which remotes may be fetched is a site value, so it is read from the same
+# configuration the installer reads, never defaulted here.
+config="${JERYU_RELEASE_CONFIG:-${HOME}/.config/jeryu/release.env}"
+if [[ -r "$config" ]]; then
+  # shellcheck disable=SC1090 # a site's own configuration, read at clone time
+  source "$config"
+fi
 default_dest="$(cd "${repo_root}/.." && pwd)"
 dest="${1:-$default_dest}"
 forge="${JERYU_FORGE_BASE:-https://git.neverhuman.org}"
@@ -17,10 +27,16 @@ portal="jeryu"
 clone_or_update() {
   local name="$1" remote="$2"
   local target="${dest}/${name}"
+  # Checked before either branch below, and for an existing checkout the url its
+  # own origin carries is checked too: a fetch reads whatever that says, not the
+  # remote the manifest names.
+  jeryu_check_git_remote "$remote"
   if [[ -d "${target}/.git" ]]; then
     printf 'updating %s\n' "$target"
+    local origin_url branch
+    origin_url="$(git -C "$target" remote get-url origin 2>/dev/null || printf '')"
+    jeryu_check_git_remote "$origin_url"
     git -C "$target" fetch --prune origin
-    local branch
     branch="$(git -C "$target" symbolic-ref --quiet --short HEAD || printf 'main')"
     git -C "$target" pull --ff-only origin "$branch"
   elif [[ -e "$target" ]]; then
@@ -28,7 +44,7 @@ clone_or_update() {
     exit 1
   else
     printf 'cloning %s -> %s\n' "$remote" "$target"
-    git clone "$remote" "$target"
+    git clone -- "$remote" "$target"
   fi
 }
 
