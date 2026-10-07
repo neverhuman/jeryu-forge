@@ -17,6 +17,9 @@ agent can read what ran instead of rerunning everything:
 - `.jankurai/repo-score.json` and `.jankurai/repo-score.md` — `just score`
 - `target/security/evidence.json` — `just security`
 - `target/tests/split-manifest-receipt.json` — `tests/split-manifest.sh`
+- `target/tests/git-remote-receipt.json` — `tests/git-remote.sh`
+- `target/tests/install-verify-receipt.json` — `tests/install-verify.sh`
+- `target/tests/release-config-receipt.json` — `tests/release-config.sh`
 
 Agent-readable exception guidance:
 

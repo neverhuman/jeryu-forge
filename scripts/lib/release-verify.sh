@@ -38,11 +38,17 @@ jeryu_release_version() {
 # jeryu_release_base_url <version>
 #
 # Prints the https base the release assets are downloaded from, from
-# JERYU_RELEASE_BASE_URL with {version} substituted.
+# JERYU_RELEASE_BASE_URL with {version} substituted. The template has to name
+# {version}: a base that does not is a floating location, and the installer
+# would report a pinned tag for whatever it served.
 jeryu_release_base_url() {
   local version="$1" template="${JERYU_RELEASE_BASE_URL:-}" url
   if [[ -z "$template" ]]; then
     printf 'JERYU_RELEASE_BASE_URL is not configured; nothing says where releases come from\n' >&2
+    return 1
+  fi
+  if [[ "$template" != *"{version}"* ]]; then
+    printf 'JERYU_RELEASE_BASE_URL=%s does not contain {version}; a release base has to be pinned to the tag\n' "$template" >&2
     return 1
   fi
   url="${template//\{version\}/$version}"
@@ -82,12 +88,16 @@ jeryu_release_signer_identity() {
 # that ran without reporting a verified signature are all refusals.
 jeryu_verify_release() {
   local bin="$1" sig="$2" cert="$3" version="$4"
-  local cosign="${JERYU_COSIGN:-cosign}"
+  local cosign=cosign
   local issuer="${JERYU_RELEASE_OIDC_ISSUER:-}"
   local identity asset output
 
   if [[ -z "$issuer" ]]; then
     printf 'JERYU_RELEASE_OIDC_ISSUER is not configured; nothing says which issuer may vouch for a signer\n' >&2
+    return 1
+  fi
+  if [[ "$issuer" != https://* ]]; then
+    printf 'JERYU_RELEASE_OIDC_ISSUER must be an https url, got %s\n' "$issuer" >&2
     return 1
   fi
   identity="$(jeryu_release_signer_identity "$version")" || return 1

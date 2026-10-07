@@ -1,6 +1,8 @@
 # Release
 
-`neverhuman/jeryu-deploy` publishes all signed release artifacts.
+`jeryu-deploy` builds and signs the release artifacts. Where they are published
+and which signer identity and issuer the installer accepts are site
+configuration (`release.env`; see the README), not values carried here.
 
 Version source is `VERSION` plus the split tag this repository is recorded
 under in the family authority manifest,

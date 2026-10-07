@@ -50,13 +50,21 @@ cat >"${stand_in}/cosign" <<'COSIGN'
 #!/usr/bin/env bash
 set -euo pipefail
 asked=""
+issuer=""
 while (($#)); do
-  case "$1" in --certificate-identity) asked="$2"; shift ;; esac
+  case "$1" in
+    --certificate-identity) asked="$2"; shift ;;
+    --certificate-oidc-issuer) issuer="$2"; shift ;;
+  esac
   shift
 done
 if [[ "${JERYU_TEST_COSIGN_STATE:-verified}" == "silent" ]]; then
   printf 'tlog entry found\n'
   exit 0
+fi
+if [[ "$issuer" != "${JERYU_TEST_CERT_ISSUER}" ]]; then
+  printf 'no matching signatures: the certificate was issued by another issuer\n' >&2
+  exit 1
 fi
 if [[ "$asked" != "${JERYU_TEST_CERT_IDENTITY}" ]]; then
   printf 'no matching signatures: none of the expected identities matched\n' >&2
@@ -77,6 +85,7 @@ branch_identity="https://ci.example.invalid/jeryu-releases/.gitea/workflows/rele
 base_env=(
   "JERYU_TEST_PUBLISHED=${release}"
   "JERYU_TEST_CERT_IDENTITY=${tag_identity}"
+  "JERYU_TEST_CERT_ISSUER=https://oidc.example.invalid"
   "JERYU_RELEASE_CONFIG=/dev/null"
   "JERYU_RELEASE_BASE_URL=https://releases.example.invalid/jeryu/{version}"
   "JERYU_RELEASE_SIGNER_IDENTITY=https://ci.example.invalid/jeryu-releases/.gitea/workflows/release.yml@refs/tags/{version}"
@@ -86,8 +95,10 @@ base_env=(
 )
 
 fail=0
+checked=0
 check() {
   local name="$1" expected="$2" actual="$3"
+  checked=$((checked + 1))
   if [[ "$expected" == "$actual" ]]; then
     printf 'ok: %s\n' "$name"
   else
@@ -148,6 +159,46 @@ refuses branch-signer "a signature made from a branch ref" \
 # The site values are configuration: with none of them set, nothing installs.
 refuses unconfigured "an installer with no release configuration" \
   "JERYU_RELEASE_BASE_URL=" "JERYU_RELEASE_SIGNER_IDENTITY=" "JERYU_RELEASE_OIDC_ISSUER="
+
+# 5. The download base has to be pinned to the tag, and the issuer has to be
+# the configured https issuer the certificate carries.
+refuses floating-base "a release base without {version}" \
+  "JERYU_RELEASE_BASE_URL=https://releases.example.invalid/jeryu/latest/download"
+refuses plain-issuer "a non-https OIDC issuer" "JERYU_RELEASE_OIDC_ISSUER=oidc.example.invalid"
+refuses other-issuer "a certificate from another issuer" \
+  "JERYU_TEST_CERT_ISSUER=https://other-oidc.example.invalid"
+
+# 6. The verifier is cosign on PATH: no variable swaps in another program.
+fake="${work}/fake-cosign"
+printf '#!/usr/bin/env bash\nprintf "Verified OK\\n"\n' >"$fake"
+chmod 0755 "$fake"
+refuses swapped-cosign "a verifier named by JERYU_COSIGN" \
+  "JERYU_TEST_STAND_IN=${no_cosign}" "JERYU_COSIGN=${fake}"
+
+# 7. The site values can come from the configuration file, which is read as
+# data: a line that is not KEY=VALUE refuses the install and never runs.
+config="${work}/release.env"
+printf 'JERYU_RELEASE_BASE_URL=https://releases.example.invalid/jeryu/{version}\n' >"$config"
+chmod 0600 "$config"
+run_install from-config "JERYU_RELEASE_CONFIG=${config}" "JERYU_RELEASE_BASE_URL="
+check "an empty environment value wins over the file" 1 "$install_status"
+install_status=0
+env -u JERYU_RELEASE_BASE_URL "${base_env[@]/#JERYU_RELEASE_BASE_URL=*/JERYU_UNUSED=1}" \
+  "JERYU_RELEASE_CONFIG=${config}" "JERYU_INSTALL_DIR=${work}/installed/from-config" \
+  "PATH=${stand_in}:${PATH}" bash "${root}/scripts/install.sh" \
+  >"${work}/from-config.out" 2>"${work}/from-config.err" || install_status=$?
+check "a base url from the configuration file installs" 0 "$install_status"
+marker="${work}/config-ran"
+printf 'touch %s\n' "$marker" >"$config"
+refuses executable-config "a configuration line that is a command" "JERYU_RELEASE_CONFIG=${config}"
+check "a configuration line is never run" "no" "$([[ -e "$marker" ]] && echo yes || echo no)"
+
+mkdir -p "${root}/target/tests"
+conclusion=success
+[[ "$fail" == "0" ]] || conclusion=failure
+cat >"${root}/target/tests/install-verify-receipt.json" <<JSON
+{"schema_version":"jeryu.install.verify-proof/v1","guard":"scripts/install.sh","assertions":${checked},"conclusion":"${conclusion}","repair_hint":"bash tests/install-verify.sh"}
+JSON
 
 if [[ "$fail" != "0" ]]; then
   printf 'tests/install-verify.sh failed\n' >&2

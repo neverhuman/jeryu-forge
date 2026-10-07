@@ -6,18 +6,24 @@ lib="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib"
 source "${lib}/install-target.sh"
 # shellcheck source=lib/release-verify.sh
 source "${lib}/release-verify.sh"
+# shellcheck source=lib/release-config.sh
+source "${lib}/release-config.sh"
 
 # Site values (where releases come from, who may sign them, which issuer
-# vouches for that signer) live in configuration, not here.
-config="${JERYU_RELEASE_CONFIG:-${HOME}/.config/jeryu/release.env}"
-if [[ -r "$config" ]]; then
-  # shellcheck disable=SC1090 # a site's own configuration, read at install time
-  source "$config"
-fi
+# vouches for that signer) live in configuration, not here. The file is parsed
+# as KEY=VALUE data, never run, and the environment takes precedence over it.
+jeryu_load_release_config
 
 version="$(jeryu_release_version "${JERYU_VERSION-}")"
 base="$(jeryu_release_base_url "$version")"
-install_dir="${JERYU_INSTALL_DIR:-${HOME}/.jeryu/bin}"
+if [[ -n "${JERYU_INSTALL_DIR:-}" ]]; then
+  install_dir="$JERYU_INSTALL_DIR"
+elif [[ -n "${HOME:-}" ]]; then
+  install_dir="${HOME}/.jeryu/bin"
+else
+  printf 'HOME is unset and JERYU_INSTALL_DIR is not set; nothing says where to install\n' >&2
+  exit 1
+fi
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 

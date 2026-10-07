@@ -59,9 +59,17 @@ JERYU_RELEASE_OIDC_ISSUER='https://oidc.example.invalid'
 JERYU_GIT_REMOTE_ALLOWLIST='git.example.invalid/git'
 ```
 
-`{version}` is replaced with the release tag, so the signer identity names that
-tag's ref: a signature made from a branch is not a release signature and is
-refused. `JERYU_INSTALL_DIR` chooses where the binary lands (default
+The file is read as data, never run: each line is a comment, a blank, or
+`KEY=VALUE` for one of the keys above (plus `JERYU_FORGE_BASE`), and any other
+line, a `$` or backtick in a value, or a file that others can write, refuses
+the run. A value already set in the environment wins over the file. Nothing is
+configured by default, so a fresh machine needs this file (or the variables)
+before either entrypoint below can succeed.
+
+`{version}` is replaced with the release tag and must appear in the base url,
+so the download is pinned to the tag; the signer identity names that tag's ref:
+a signature made from a branch is not a release signature and is refused. The
+issuer must be an `https` url. The verifier is always the `cosign` on `PATH`. `JERYU_INSTALL_DIR` chooses where the binary lands (default
 `~/.jeryu/bin`).
 
 ## Quickstart
@@ -97,7 +105,9 @@ entry of `JERYU_GIT_REMOTE_ALLOWLIST` (`host/segment`, separated by whitespace
 or commas) exactly, read from the same configuration as the values above. An
 unconfigured allowlist refuses everything; so do userinfo, an explicit port, a
 `.` or `..` or percent-encoded path segment, a control character, a leading dash
-and the `ssh`, `http` and `file` schemes.
+and the `ssh`, `http` and `file` schemes. A manifest row whose name is not a
+single path segment is refused, so no row can clone or pull outside the
+destination.
 
 Existing checkouts are updated with `git fetch` and `git pull --ff-only`, after
 the url their own `origin` carries is checked the same way.
