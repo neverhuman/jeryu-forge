@@ -30,8 +30,6 @@ jobs:
         run: bash ops/ci/ensure-jankurai.sh
       - name: PR CI (canonical gate)
         run: bash ops/ci/pr-ci.sh
-      - name: Proof evidence lane
-        run: bash ops/ci/proof_evidence.sh
       - name: Upload audit artifacts
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

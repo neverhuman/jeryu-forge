@@ -14,6 +14,11 @@ base_ref="${JERYU_PROOF_BASE_REF:-origin/main}"
 baseline=agent/baselines/main.repo-score.json
 provenance=agent/baselines/main.repo-score.provenance.json
 
+if ! git rev-parse --verify "${base_ref}^{commit}" >/dev/null 2>&1; then
+  case "$base_ref" in
+    origin/*) git fetch --no-tags origin "${base_ref#origin/}:refs/remotes/${base_ref}" ;;
+  esac
+fi
 git rev-parse --verify "${base_ref}^{commit}" >/dev/null
 baseline_commit="$(jq -er '.source.commit' "$provenance")"
 if ! git merge-base --is-ancestor "$baseline_commit" HEAD; then
