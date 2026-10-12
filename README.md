@@ -1,5 +1,7 @@
 # Jeryu
 
+[![CI](https://img.shields.io/badge/CI-check%20%7C%20score%20%7C%20security-blue)](.github/workflows/ci.yml)
+
 **A 100% Rust, local-first GitHub replacement built for AI agents.**
 
 Jeryu is a self-hosted forge — repositories, pull requests, checks, CI,

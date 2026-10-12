@@ -30,6 +30,8 @@ jobs:
         run: bash ops/ci/ensure-jankurai.sh
       - name: PR CI (canonical gate)
         run: bash ops/ci/pr-ci.sh
+      - name: Proof evidence lane
+        run: bash ops/ci/proof_evidence.sh
       - name: Upload audit artifacts
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -38,5 +40,25 @@ jobs:
           path: |
             .jankurai/
             target/jankurai/
+            target/jankurai/coverage/coverage-audit.md
+            target/jankurai/coverage/coverage-audit.json
+            target/jankurai/vibe-coverage.md
+            target/jankurai/vibe-coverage.json
+            target/jankurai/migration-report.json
+            target/jankurai/ux-qa.json
+            target/jankurai/rust/witness-graph.json
+            target/jankurai/language-bad-behavior.log
+            target/jankurai/copy-code.md
+            target/jankurai/copy-code.json
+            target/jankurai/proofmark/proof-receipt.json
+            target/jankurai/proofmark/proofmark-receipt.json
+            target/jankurai/proofbind/obligations.json
+            target/jankurai/proofbind/surface-witness.json
+            target/jankurai/security/evidence.json
+            target/jankurai/repair-queue.jsonl
+            target/jankurai/repo-score.md
+            target/jankurai/repo-score.json
+            .jankurai/repo-score.md
+            .jankurai/repo-score.json
             target/artifact-support/
           if-no-files-found: ignore
