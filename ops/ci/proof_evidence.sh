@@ -1,97 +1,50 @@
 #!/usr/bin/env bash
+# Jankurai tool-adoption evidence lane. Every tool listed as `auto` in
+# agent/tool-adoption.toml runs here for real and fails the lane on failure;
+# no artifact is synthesized, and the ratchet baseline is the committed,
+# reviewed report of protected main (agent/baselines/), never this run's output.
 set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$repo_root"
 source ops/ci/lib.sh
 require_jankurai
 
-mkdir -p   .jankurai   target/jankurai/security   target/jankurai/proofbind   target/jankurai/proofmark   target/jankurai/rust   target/jankurai/coverage
+base_ref="${JERYU_PROOF_BASE_REF:-origin/main}"
+baseline=agent/baselines/main.repo-score.json
+provenance=agent/baselines/main.repo-score.provenance.json
 
-# Catalog CI commands retained verbatim for Jankurai tool-adoption detection:
-# jankurai audit . --mode ratchet --baseline target/jankurai/accepted-baseline.json --json target/jankurai/repo-score.json --md target/jankurai/repo-score.md
-# jankurai proofbind verify . --changed-from origin/main
-# jankurai proofmark rust . --obligations target/jankurai/proofbind/obligations.json
-# cargo run -p jankurai -- copy-code . --json target/jankurai/copy-code.json --md target/jankurai/copy-code.md
-# jankurai security run . --out target/jankurai/security/evidence.json
-# cargo test -p jankurai --test language_bad_behavior
-# jankurai ux audit --config agent/ux-qa.toml --out target/jankurai/ux-qa.json
-# jankurai migrate . --analyze --json target/jankurai/migration-report.json
-# jankurai rust witness build .
-# jankurai vibe coverage --source agent/vibe-coverage.toml --tips tips/vibe_coding --json target/jankurai/vibe-coverage.json --md target/jankurai/vibe-coverage.md
-# jankurai coverage audit . --config agent/coverage-sources.toml --json target/jankurai/coverage/coverage-audit.json --md target/jankurai/coverage/coverage-audit.md
-
-jankurai audit . --mode advisory   --json .jankurai/repo-score.json   --md .jankurai/repo-score.md   --repair-queue-jsonl target/jankurai/repair-queue.jsonl   --full   --no-score-history
-cp .jankurai/repo-score.json target/jankurai/repo-score.json
-cp .jankurai/repo-score.md target/jankurai/repo-score.md
-cp .jankurai/repo-score.json target/jankurai/accepted-baseline.json
-
-if ! jankurai security run . --out target/jankurai/security/evidence.json; then
-  printf '{"schema_version":"jeryu.split.security/v1","status":"local-script-fallback","checks":["ops/ci/security.sh"]}
-' > target/jankurai/security/evidence.json
+git rev-parse --verify "${base_ref}^{commit}" >/dev/null
+baseline_commit="$(jq -er '.source.commit' "$provenance")"
+if ! git merge-base --is-ancestor "$baseline_commit" HEAD; then
+  printf 'ratchet baseline commit %s is not an ancestor of HEAD\n' "$baseline_commit" >&2
+  exit 1
 fi
+[[ "$(jq -er '.git.head' "$baseline")" == "${baseline_commit:0:7}" ]] || {
+  printf 'baseline report does not match its provenance commit\n' >&2
+  exit 1
+}
 
-changed_args=(--changed agent/tool-adoption.toml)
-if git rev-parse --verify origin/main >/dev/null 2>&1; then
-  if ! jankurai proofbind verify . --changed-from origin/main; then
-    jankurai proofbind verify . "${changed_args[@]}" || true
-  fi
-else
-  jankurai proofbind verify . "${changed_args[@]}" || true
-fi
-[ -s target/jankurai/proofbind/surface-witness.json ] || printf '{"schema_version":"jeryu.proofbind.surface/v1","status":"no-local-base"}
-' > target/jankurai/proofbind/surface-witness.json
-[ -s target/jankurai/proofbind/obligations.json ] || printf '[]
-' > target/jankurai/proofbind/obligations.json
+rm -rf target/jankurai/proofbind target/jankurai/security \
+  target/jankurai/accepted-baseline.json target/jankurai/repo-score.json \
+  target/jankurai/repo-score.md target/jankurai/repair-queue.jsonl
+mkdir -p target/jankurai/proofbind target/jankurai/security
+cp "$baseline" target/jankurai/accepted-baseline.json
 
-jankurai proofmark rust . --obligations target/jankurai/proofbind/obligations.json || true
-[ -s target/jankurai/proofmark/proofmark-receipt.json ] || printf '{"schema_version":"jeryu.proofmark/v1","status":"no-local-obligations"}
-' > target/jankurai/proofmark/proofmark-receipt.json
-[ -s target/jankurai/proofmark/proof-receipt.json ] || printf '{"schema_version":"jeryu.proofmark.proof/v1","status":"no-local-obligations"}
-' > target/jankurai/proofmark/proof-receipt.json
+jankurai proofbind verify . --changed-from origin/main --out target/jankurai/proofbind/surface-witness.json --obligations-out target/jankurai/proofbind/obligations.json
+jankurai security run . --out target/jankurai/security/evidence.json --strict --profile ci
+jq -e --arg head "$(git rev-parse HEAD)" '
+  .git_head == $head and .exit_code == 0 and
+  ([.commands[] | select(.status != "ran" or .exit_code != 0)] | length) == 0
+' target/jankurai/security/evidence.json >/dev/null
 
-jankurai copy-code . --json target/jankurai/copy-code.json --md target/jankurai/copy-code.md || true
-[ -s target/jankurai/copy-code.json ] || printf '{"schema_version":"jankurai.copy-code/v1","classes":[]}
-' > target/jankurai/copy-code.json
-[ -s target/jankurai/copy-code.md ] || printf '# Copy-code evidence
+jankurai audit . --mode ratchet --baseline target/jankurai/accepted-baseline.json --json target/jankurai/repo-score.json --md target/jankurai/repo-score.md --policy agent/audit-policy.toml --full --repair-queue-jsonl target/jankurai/repair-queue.jsonl --no-score-history
+jq -e '.decision.hard_findings == 0 and (.caps_applied | length) == 0' \
+  target/jankurai/repo-score.json >/dev/null
 
-No local copy-code report was produced.
-' > target/jankurai/copy-code.md
-
-printf 'language bad-behavior detectors are covered by jankurai audit/security for this split repo
-' > target/jankurai/language-bad-behavior.log
-jankurai rust witness build . --out target/jankurai/rust/witness-graph.json || true
-[ -s target/jankurai/rust/witness-graph.json ] || printf '{"schema_version":"jankurai.rust-witness/v1","nodes":[],"edges":[]}
-' > target/jankurai/rust/witness-graph.json
-
-if [ -f agent/ux-qa.toml ]; then
-  jankurai ux audit --config agent/ux-qa.toml --out target/jankurai/ux-qa.json || true
-fi
-[ -s target/jankurai/ux-qa.json ] || printf '{"schema_version":"jankurai.ux-qa/v1","status":"not-applicable"}
-' > target/jankurai/ux-qa.json
-
-if [ -d db/migrations ]; then
-  jankurai migrate . --analyze --out target/jankurai/migration-report.json --md target/jankurai/migration-report.md || true
-fi
-[ -s target/jankurai/migration-report.json ] || printf '{"schema_version":"jankurai.migration/v1","status":"no-owned-migrations"}
-' > target/jankurai/migration-report.json
-
-if [ -f agent/vibe-coverage.toml ]; then
-  jankurai vibe coverage --source agent/vibe-coverage.toml --tips tips/vibe_coding --json target/jankurai/vibe-coverage.json --md target/jankurai/vibe-coverage.md || true
-fi
-[ -s target/jankurai/vibe-coverage.json ] || printf '{"schema_version":"jankurai.vibe-coverage/v1","status":"not-applicable"}
-' > target/jankurai/vibe-coverage.json
-[ -s target/jankurai/vibe-coverage.md ] || printf '# Vibe coverage
-
-Not applicable for this split repo.
-' > target/jankurai/vibe-coverage.md
-
-if [ -f agent/coverage-sources.toml ]; then
-  jankurai coverage audit . --config agent/coverage-sources.toml --json target/jankurai/coverage/coverage-audit.json --md target/jankurai/coverage/coverage-audit.md || true
-fi
-[ -s target/jankurai/coverage/coverage-audit.json ] || printf '{"schema_version":"jankurai.coverage/v1","status":"not-applicable"}
-' > target/jankurai/coverage/coverage-audit.json
-[ -s target/jankurai/coverage/coverage-audit.md ] || printf '# Coverage audit
-
-Not applicable for this split repo.
-' > target/jankurai/coverage/coverage-audit.md
-
-printf 'proof evidence ok
-'
+for artifact in target/jankurai/proofbind/surface-witness.json \
+  target/jankurai/proofbind/obligations.json \
+  target/jankurai/security/evidence.json target/jankurai/repo-score.json; do
+  [[ -s "$artifact" ]] || { printf 'missing tool output: %s\n' "$artifact" >&2; exit 1; }
+done
+printf 'proof evidence ok\n'

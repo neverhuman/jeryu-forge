@@ -1,81 +1,82 @@
 schema_version = "1.0.0"
+# `auto` = the named lane runs it for real in CI. `disabled` = not run; reason given.
 
 [[tools]]
-id = "audit-ci"
+id = "proof-routing" # ratchet audit in ops/ci/proof_evidence.sh
 mode = "auto"
 
 [[tools]]
-id = "proof-routing"
+id = "proofbind" # ops/ci/proof_evidence.sh
 mode = "auto"
 
 [[tools]]
-id = "proofbind"
+id = "contract-drift" # ratchet audit in ops/ci/proof_evidence.sh
 mode = "auto"
 
 [[tools]]
-id = "proofmark-rust"
+id = "authz-matrix" # ratchet audit in ops/ci/proof_evidence.sh
 mode = "auto"
 
 [[tools]]
-id = "copy-code"
+id = "agent-tool-supply" # ratchet audit in ops/ci/proof_evidence.sh
 mode = "auto"
 
 [[tools]]
-id = "security"
+id = "release-readiness" # ratchet audit in ops/ci/proof_evidence.sh
 mode = "auto"
 
 [[tools]]
-id = "ci-bad-behavior"
+id = "cost-budget" # ratchet audit in ops/ci/proof_evidence.sh
 mode = "auto"
 
 [[tools]]
-id = "git-bad-behavior"
+id = "audit-ci" # ops/ci/score.sh runs the full audit; proof_evidence.sh replays it in ratchet mode
 mode = "auto"
 
 [[tools]]
-id = "release-bad-behavior"
+id = "security" # ops/ci/proof_evidence.sh (strict, receipt checked)
 mode = "auto"
 
 [[tools]]
-id = "ux-qa"
-mode = "auto"
+id = "release-bad-behavior" # its CI command is jankurai's own test suite; not runnable here
+mode = "disabled"
 
 [[tools]]
-id = "db-migration-analyze"
-mode = "auto"
+id = "ci-bad-behavior" # its CI command is jankurai's own test suite; not runnable here
+mode = "disabled"
 
 [[tools]]
-id = "contract-drift"
-mode = "auto"
+id = "git-bad-behavior" # its CI command is jankurai's own test suite; not runnable here
+mode = "disabled"
 
 [[tools]]
-id = "rust-witness"
-mode = "auto"
+id = "proofmark-rust" # no Rust code
+mode = "disabled"
 
 [[tools]]
-id = "coverage-evidence"
-mode = "auto"
+id = "rust-witness" # no Rust code
+mode = "disabled"
 
 [[tools]]
-id = "vibe-coverage"
-mode = "auto"
+id = "copy-code" # no product code
+mode = "disabled"
 
 [[tools]]
-id = "input-boundary"
-mode = "auto"
+id = "ux-qa" # no web surface
+mode = "disabled"
 
 [[tools]]
-id = "authz-matrix"
-mode = "auto"
+id = "db-migration-analyze" # no database
+mode = "disabled"
 
 [[tools]]
-id = "agent-tool-supply"
-mode = "auto"
+id = "coverage-evidence" # no coverage lane
+mode = "disabled"
 
 [[tools]]
-id = "release-readiness"
-mode = "auto"
+id = "vibe-coverage" # no vibe-coverage source
+mode = "disabled"
 
 [[tools]]
-id = "cost-budget"
-mode = "auto"
+id = "input-boundary" # no product code
+mode = "disabled"

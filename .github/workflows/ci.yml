@@ -40,25 +40,12 @@ jobs:
           path: |
             .jankurai/
             target/jankurai/
-            target/jankurai/coverage/coverage-audit.md
-            target/jankurai/coverage/coverage-audit.json
-            target/jankurai/vibe-coverage.md
-            target/jankurai/vibe-coverage.json
-            target/jankurai/migration-report.json
-            target/jankurai/ux-qa.json
-            target/jankurai/rust/witness-graph.json
-            target/jankurai/language-bad-behavior.log
-            target/jankurai/copy-code.md
-            target/jankurai/copy-code.json
-            target/jankurai/proofmark/proof-receipt.json
-            target/jankurai/proofmark/proofmark-receipt.json
-            target/jankurai/proofbind/obligations.json
-            target/jankurai/proofbind/surface-witness.json
-            target/jankurai/security/evidence.json
-            target/jankurai/repair-queue.jsonl
-            target/jankurai/repo-score.md
+            target/jankurai/accepted-baseline.json
             target/jankurai/repo-score.json
-            .jankurai/repo-score.md
-            .jankurai/repo-score.json
+            target/jankurai/repo-score.md
+            target/jankurai/repair-queue.jsonl
+            target/jankurai/proofbind/surface-witness.json
+            target/jankurai/proofbind/obligations.json
+            target/jankurai/security/evidence.json
             target/artifact-support/
           if-no-files-found: ignore
