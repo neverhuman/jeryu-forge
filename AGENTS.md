@@ -10,3 +10,5 @@ Before editing, read `README.md`, `agent/owner-map.json`,
 Keep this repository lightweight: installer, clone-family entrypoint, local CI
 wrappers, and audit metadata only. Product source belongs in the split member
 repositories, and release authority belongs in `jeryu-deploy`.
+
+- Do not edit CHANGELOG.md in a change: release notes are generated at release time from commit subjects and Todo: trailers.

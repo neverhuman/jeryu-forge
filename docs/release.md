@@ -6,8 +6,8 @@ configuration (`release.env`; see the README), not values carried here.
 
 Version source is `VERSION` plus the split tag this repository is recorded
 under in the family authority manifest,
-`jeryu-release-ops/repos.manifest.toml`. Release notes are recorded in
-`CHANGELOG.md`.
+`jeryu-release-ops/repos.manifest.toml`. The release generates its notes from the
+commits since the last release and writes them to `CHANGELOG.md`.
 
 ## Release Gate
 
