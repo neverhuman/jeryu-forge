@@ -238,7 +238,8 @@ require_jankurai() {
          $v == "release-key-signed" or ($test_mode and $v == "test-fixture")),
        check("signature.scheme"; .signature.scheme == "cosign-key-offline"),
        check("signature.verified";
-         .signature.verified == (.source.verification == "release-key-signed")),
+         (.source.verification == "release-key-signed" and .signature.verified == true) or
+         ($test_mode and .source.verification == "test-fixture" and .signature.verified == false)),
        check("signature.signer_sha256"; .signature.signer_sha256 == $signer_sha256),
        check("signature.cosign_sha256"; .signature.cosign_sha256 == $cosign_sha256),
        check("build.mode"; .build.mode == "public-release-key-signed-v1"),
@@ -382,12 +383,18 @@ require_jankurai() {
         "export JERYU_JANKURAI_BUILD_COMMAND=\(.build.command|q("build.command"))",
         "export JERYU_JANKURAI_BUILD_CONTEXT_SHA256=\(.build.context_sha256|q("build.context_sha256"))"
       end'
+    # jq's stderr never reaches the string that is evaluated: it is captured
+    # separately and only reported when the export program fails.
+    local export_err
+    export_err="$(mktemp)"
     if ! receipt_exports="$(jq -r "[${receipt_export_program}] | .[]" \
-        "${JERYU_JANKURAI_RECEIPT}" 2>&1)"; then
+        "${JERYU_JANKURAI_RECEIPT}" 2>"${export_err}")"; then
       printf 'governed jankurai receipt %s cannot export its identity: %s\n' \
-        "${JERYU_JANKURAI_RECEIPT}" "${receipt_exports//$'\n'/ }" >&2
+        "${JERYU_JANKURAI_RECEIPT}" "$(tr '\n' ' ' <"${export_err}")" >&2
+      rm -f -- "${export_err}"
       exit 1
     fi
+    rm -f -- "${export_err}"
     eval "${receipt_exports}"
   fi
   export JERYU_JANKURAI_VERSION="${actual}" JERYU_JANKURAI_SHA256="${actual_sha}"
