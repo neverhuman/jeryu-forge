@@ -25,8 +25,16 @@ if ! git merge-base --is-ancestor "$baseline_commit" HEAD; then
   printf 'ratchet baseline commit %s is not an ancestor of HEAD\n' "$baseline_commit" >&2
   exit 1
 fi
-[[ "$(jq -er '.git.head' "$baseline")" == "${baseline_commit:0:7}" ]] || {
-  printf 'baseline report does not match its provenance commit\n' >&2
+[[ "$baseline_commit" =~ ^[0-9a-f]{40}$ ]] || {
+  printf 'ratchet baseline provenance must name a full commit sha: %s\n' "$baseline_commit" >&2
+  exit 1
+}
+# Jankurai 1.7 records the full 40-char head; an abbreviated head is a stale
+# (pre-1.7) baseline and must be regenerated, never matched by prefix.
+baseline_head="$(jq -er '.git.head' "$baseline")"
+[[ "$baseline_head" == "$baseline_commit" ]] || {
+  printf 'baseline report head %s does not match its provenance commit %s\n' \
+    "$baseline_head" "$baseline_commit" >&2
   exit 1
 }
 

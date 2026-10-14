@@ -1,0 +1,6 @@
+{
+  "schema": "jeryu.jankurai-baseline-provenance/v1",
+  "source": { "branch": "main", "commit": "a95c00c179959a1881aad269973daa1362e9af83", "dirty_worktree": false },
+  "jankurai": { "version": "jankurai 1.6.11" },
+  "command": "jankurai audit . --full --mode advisory --policy agent/audit-policy.toml --json agent/baselines/main.repo-score.json --no-score-history"
+}

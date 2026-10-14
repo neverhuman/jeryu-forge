@@ -24,10 +24,17 @@ require_jankurai() {
   # the one pin of record (tool-manifest.toml on protected jeryu-tool main) and
   # leaves an authority stamp; a host whose install no longer matches its stamp
   # fails here instead of scoring with a stale auditor.
+  #
+  # Receipts: `jeryu.jankurai-installation/v3` binds a key-signed public
+  # Jankurai release (signature verified offline against the pinned release
+  # key). `v2` (a hermetic source build) is still accepted for one transition:
+  # hosts reinstall from the v3 pin on their next timer tick, and the authority
+  # stamp keeps a host that has not done so from passing.
   local mode=receipt-bound
   local expected_broker="/opt/jain-ci/authority/release-bin/jankurai"
   local expected_governed="/home/ubuntu/.jeryu/bin/jankurai"
   local bin bin_dir governed_root normalized resolved actual actual_sha receipt receipt_digest receipt_sha
+  local receipt_schema receipt_filter
   local expected_test=false expected_verification=release-authoritative
   local expected_governance=governed expected_protected=true
   local expected_protection=immutable-main-v1 found_receipt=0
@@ -153,19 +160,27 @@ require_jankurai() {
     receipt_sha="$(sha256sum "${receipt}" | awk '{print $1}')"
     [[ "${receipt_sha}" == "${receipt_digest}" ]] || continue
     # The receipt is self-certifying (its name is its own digest) and must bind
-    # exactly this binary at exactly this path, built hermetically from a
-    # governed, protected-main jeryu-tool manifest.
-    if jq -e \
-      --arg digest "${actual_sha}" \
-      --arg version "${actual}" \
-      --arg path "${bin}" \
-      --arg verification "${expected_verification}" \
-      --arg governance "${expected_governance}" \
-      --arg protection "${expected_protection}" \
-      --argjson protected_main "${expected_protected}" \
-      --argjson test_mode "${expected_test}" \
-      '.schema == "jeryu.jankurai-installation/v2" and
-       (.source.remote | type == "string" and startswith("https://")) and
+    # exactly this binary at exactly this path, installed from a governed,
+    # protected-main jeryu-tool manifest: either a key-signed public release
+    # (v3) or, during the transition, a hermetic source build (v2).
+    receipt_schema="$(jq -r '.schema // empty' "${receipt}" 2>/dev/null || true)"
+    case "${receipt_schema}" in
+      jeryu.jankurai-installation/v3)
+        receipt_filter='(.source.remote | type == "string" and startswith("https://")) and
+       (.source.tag | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")) and
+       (.source.commit | test("^[0-9a-f]{40}$")) and (.source.tree | test("^[0-9a-f]{40}$")) and
+       (.source.asset | type == "string" and endswith(".tar.gz")) and
+       (.source.archive_sha256 | test("^[0-9a-f]{64}$")) and
+       (.source.provenance_sha256 | test("^[0-9a-f]{64}$")) and
+       (.source.cargo_lock_sha256 | test("^[0-9a-f]{64}$")) and
+       .source.verification == "release-key-signed" and
+       .signature.scheme == "cosign-key-offline" and .signature.verified == true and
+       (.signature.signer_sha256 | test("^[0-9a-f]{64}$")) and
+       (.signature.cosign_sha256 | test("^[0-9a-f]{64}$")) and
+       .build.mode == "public-release-key-signed-v1"'
+        ;;
+      jeryu.jankurai-installation/v2)
+        receipt_filter='(.source.remote | type == "string" and startswith("https://")) and
        (.source.commit | test("^[0-9a-f]{40}$")) and (.source.tree | test("^[0-9a-f]{40}$")) and
        (.source.tag | type == "string" and length > 0) and
        (.source.archive_sha256 | test("^[0-9a-f]{64}$")) and
@@ -182,7 +197,20 @@ require_jankurai() {
        .build.git_http_follow_redirects == false and .build.git_terminal_prompt == false and
        .build.jankurai_update_check == false and
        .build.network_scope ==
-         "local-forge-source-plus-closed-vendor-network-none" and
+         "local-forge-source-plus-closed-vendor-network-none"'
+        ;;
+      *) continue ;;
+    esac
+    if jq -e \
+      --arg digest "${actual_sha}" \
+      --arg version "${actual}" \
+      --arg path "${bin}" \
+      --arg verification "${expected_verification}" \
+      --arg governance "${expected_governance}" \
+      --arg protection "${expected_protection}" \
+      --argjson protected_main "${expected_protected}" \
+      --argjson test_mode "${expected_test}" \
+      "${receipt_filter}"' and
        .governance.status == $governance and
        .governance.manifest_repo ==
          "https://git.neverhuman.org/git/jeryu/jeryu-tool.git" and
@@ -222,18 +250,28 @@ require_jankurai() {
       "export JERYU_JANKURAI_CARGO_VERSION=\(.build.cargo|q)",
       "export JERYU_JANKURAI_TARGET_TRIPLE=\(.build.target_triple|q)",
       "export JERYU_JANKURAI_BUILD_MODE=\(.build.mode|q)",
-      "export JERYU_JANKURAI_PACKAGE_PATH=\(.build.package_path|q)",
-      "export JERYU_JANKURAI_BUILDER_IMAGE=\(.build.builder_image|q)",
-      "export JERYU_JANKURAI_BUILDER_IMAGE_ID=\(.build.builder_image_id|q)",
-      "export JERYU_JANKURAI_LINKER_VERSION=\(.build.linker|q)",
-      "export JERYU_JANKURAI_GLIBC_VERSION=\(.build.glibc|q)",
-      "export JERYU_JANKURAI_VENDOR_FILES_SHA256=\(.build.vendor_files_sha256|q)",
-      "export JERYU_JANKURAI_VENDOR_FILE_COUNT=\(.build.vendor_file_count|q)",
-      "export JERYU_JANKURAI_CARGO_CONFIG_SHA256=\(.build.cargo_config_sha256|q)",
-      "export JERYU_JANKURAI_BUILD_ENVIRONMENT=\(.build.environment|q)",
-      "export JERYU_JANKURAI_RUSTFLAGS=\(.build.rustflags|q)",
-      "export JERYU_JANKURAI_BUILD_COMMAND=\(.build.command|q)",
-      "export JERYU_JANKURAI_BUILD_CONTEXT_SHA256=\(.build.context_sha256|q)"
+      if .schema == "jeryu.jankurai-installation/v3" then
+        "export JERYU_JANKURAI_RELEASE_ASSET=\(.source.asset|q)",
+        "export JERYU_JANKURAI_RELEASE_ASSET_SHA256=\(.source.archive_sha256|q)",
+        "export JERYU_JANKURAI_PROVENANCE_SHA256=\(.source.provenance_sha256|q)",
+        "export JERYU_JANKURAI_FAMILY_LOCK_SHA256=\(.source.family_lock_sha256|q)",
+        "export JERYU_JANKURAI_RELEASE_SIGNER_SHA256=\(.signature.signer_sha256|q)",
+        "export JERYU_JANKURAI_VERIFICATION=\(.source.verification|q)"
+      else
+        "export JERYU_JANKURAI_PACKAGE_PATH=\(.build.package_path|q)",
+        "export JERYU_JANKURAI_BUILDER_IMAGE=\(.build.builder_image|q)",
+        "export JERYU_JANKURAI_BUILDER_IMAGE_ID=\(.build.builder_image_id|q)",
+        "export JERYU_JANKURAI_LINKER_VERSION=\(.build.linker|q)",
+        "export JERYU_JANKURAI_GLIBC_VERSION=\(.build.glibc|q)",
+        "export JERYU_JANKURAI_VENDOR_FILES_SHA256=\(.build.vendor_files_sha256|q)",
+        "export JERYU_JANKURAI_VENDOR_FILE_COUNT=\(.build.vendor_file_count|q)",
+        "export JERYU_JANKURAI_CARGO_CONFIG_SHA256=\(.build.cargo_config_sha256|q)",
+        "export JERYU_JANKURAI_BUILD_ENVIRONMENT=\(.build.environment|q)",
+        "export JERYU_JANKURAI_RUSTFLAGS=\(.build.rustflags|q)",
+        "export JERYU_JANKURAI_BUILD_COMMAND=\(.build.command|q)",
+        "export JERYU_JANKURAI_BUILD_CONTEXT_SHA256=\(.build.context_sha256|q)",
+        "export JERYU_JANKURAI_VERIFICATION=\(.source.verification|q)"
+      end
     ' "${JERYU_JANKURAI_RECEIPT}")"
   fi
   export JERYU_JANKURAI_VERSION="${actual}" JERYU_JANKURAI_SHA256="${actual_sha}"
