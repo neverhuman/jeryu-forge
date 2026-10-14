@@ -23,12 +23,14 @@ require_jankurai() {
   # and target rendered below from tool-manifest.toml, and the release fields
   # the receipt records to be well formed and mutually consistent. Those trust
   # anchors change only on a key, cosign or repository rotation, so a Jankurai
-  # release bump renders no consumer change.
+  # release bump renders no consumer change. A rejected receipt is reported
+  # with the fields that failed; a diagnostic install is exported as
+  # `diagnostic-candidate`, never as release-key-signed.
   # `v2` (a hermetic source build) is still accepted while hosts migrate, and
   # only until every governed host and the sandbox image carry a v3 receipt
-  # (jeryu-tool docs/release.md, "Receipt transition"). The authority stamp binds only the
-  # binary digest the host's own installer last confirmed; it records no
-  # receipt schema or version, so it does not by itself retire v2.
+  # (jeryu-tool docs/release.md, "Receipt transition"). The authority stamp
+  # binds only the binary digest the host's own installer last confirmed; it
+  # records no receipt schema or version, so it does not by itself retire v2.
   local pinned_release_repo="https://github.com/neverhuman/jankurai-audit"
   local pinned_signer_sha256="99f48af11e4e6463544652ddfaefb0e9953de15fb0802b174123ac2907ff06fc"
   local pinned_cosign_sha256="4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71"
@@ -37,12 +39,13 @@ require_jankurai() {
   local expected_broker="/opt/jain-ci/authority/release-bin/jankurai"
   local expected_governed="/home/ubuntu/.jeryu/bin/jankurai"
   local bin bin_dir governed_root normalized resolved actual actual_sha receipt receipt_digest receipt_sha
-  local receipt_schema receipt_filter receipt_defs receipt_exports receipt_export_program
+  local receipt_schema receipt_checks receipt_common receipt_defs receipt_failed
+  local receipt_exports receipt_export_program
   local expected_test=false expected_verification=release-authoritative
   local expected_governance=governed expected_protected=true
   local expected_protection=immutable-main-v1 found_receipt=0
   local authority_sha="" authority_stamp
-  local -a receipt_candidates=()
+  local -a receipt_candidates=() rejected_receipts=()
   if [[ "${JAIN_RELEASE_CI:-0}" == "1" ]]; then
     mode=release-broker
     resolved="$(type -P -- jankurai 2>/dev/null || true)"
@@ -156,75 +159,131 @@ require_jankurai() {
       "${bin}" >&2
     exit 1
   fi
-  # Every field the receipt filters accept and the export below reads is typed
-  # here: a missing or mistyped field rejects the receipt instead of erroring.
+  # Each receipt is judged field by field. Every check names the receipt field
+  # it reads; a check that is false, or whose field is missing or mistyped,
+  # fails, and a rejected receipt is reported with the fields that failed. A
+  # verifier program that cannot run at all is an error, never a mismatch.
   receipt_defs='def text: type == "string" and length > 0;
     def hex($n): type == "string" and test("^[0-9a-f]{\($n)}$");
     def count: if type == "number" then . >= 0 and floor == .
       else type == "string" and test("^[0-9]+$") end;
     def toolchain($tool): text and test("^\($tool) [0-9]+\\.[0-9]+\\.[0-9]+( |$)");
+    def check($field; cond): if [try cond catch false] == [true] then empty else $field end;
     '
+  receipt_common='check("governance.status"; .governance.status == $governance),
+    check("governance.manifest_repo"; .governance.manifest_repo ==
+      "https://git.neverhuman.org/git/jeryu/jeryu-tool.git"),
+    check("governance.manifest_commit"; .governance.manifest_commit | hex(40)),
+    check("governance.manifest_tree"; .governance.manifest_tree | hex(40)),
+    check("governance.manifest_sha256"; .governance.manifest_sha256 | hex(64)),
+    check("governance.protected_main"; .governance.protected_main == $protected_main),
+    check("governance.protection_policy"; .governance.protection_policy == $protection),
+    check("binary.sha256"; .binary.sha256 == $digest),
+    check("binary.version_output"; .binary.version_output == $version),
+    check("installation.path"; .installation.path == $path),
+    check("installation.atomic"; .installation.atomic == true),
+    check("test_mode"; .test_mode == $test_mode),
+    check("conclusion"; .conclusion == "success")'
   for receipt in "${receipt_candidates[@]}"; do
-    [[ -f "${receipt}" ]] || continue
+    if [[ ! -f "${receipt}" ]]; then
+      rejected_receipts+=("${receipt}: no such receipt file")
+      continue
+    fi
     receipt_digest="$(basename "${receipt}" .json)"
-    [[ "${receipt_digest}" =~ ^[0-9a-f]{64}$ ]] || continue
+    if [[ ! "${receipt_digest}" =~ ^[0-9a-f]{64}$ ]]; then
+      rejected_receipts+=("${receipt}: file name is not its sha256 digest")
+      continue
+    fi
     receipt_sha="$(sha256sum "${receipt}" | awk '{print $1}')"
-    [[ "${receipt_sha}" == "${receipt_digest}" ]] || continue
+    if [[ "${receipt_sha}" != "${receipt_digest}" ]]; then
+      rejected_receipts+=("${receipt}: content digest is ${receipt_sha}")
+      continue
+    fi
     # The receipt is self-certifying (its name is its own digest) and must bind
     # exactly this binary at exactly this path, installed from a governed,
     # protected-main jeryu-tool manifest: either a key-signed public release
-    # (v3) or, during the transition, a hermetic source build (v2).
-    receipt_schema="$(jq -r '.schema // empty' "${receipt}" 2>/dev/null || true)"
+    # (v3) or, during the transition, a hermetic source build (v2). jq prints
+    # nothing on stdout when it fails, so its own message is what is reported.
+    if ! receipt_schema="$(jq -r 'if type == "object" then (.schema // "")
+        else error("receipt is not a JSON object") end' "${receipt}" 2>&1)"; then
+      rejected_receipts+=("${receipt}: unreadable: ${receipt_schema//$'\n'/ }")
+      continue
+    fi
     case "${receipt_schema}" in
       jeryu.jankurai-installation/v3)
-        receipt_filter='.source.remote == $release_repo and
-       (.source.tag | text and test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")) and
-       .binary.version_output == ("jankurai " + (.source.tag | ltrimstr("v"))) and
-       .source.asset ==
-         ("jankurai-" + (.source.tag | ltrimstr("v")) + "-" + $target_triple + ".tar.gz") and
-       (.source.commit | hex(40)) and (.source.tree | hex(40)) and
-       (.source.archive_sha256 | hex(64)) and
-       (.source.provenance_sha256 | hex(64)) and
-       (.source.cargo_lock_sha256 | hex(64)) and
-       (.source.family_lock_sha256 | hex(64)) and
-       .source.verification == "release-key-signed" and
-       .signature.scheme == "cosign-key-offline" and .signature.verified == true and
-       .signature.signer_sha256 == $signer_sha256 and
-       .signature.cosign_sha256 == $cosign_sha256 and
-       .build.mode == "public-release-key-signed-v1" and
-       .build.target_triple == $target_triple and
-       (.build.rustc | toolchain("rustc")) and (.build.cargo | toolchain("cargo"))'
+        # A diagnostic install (JERYU_JANKURAI_ALLOW_TEST_RECEIPT=1) may bind a
+        # test fixture whose signature was never verified; it must say so, and
+        # it is exported as diagnostic-candidate, never as release-key-signed.
+        receipt_checks='check("source.remote"; .source.remote == $release_repo),
+       check("source.tag"; .source.tag | text and test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")),
+       check("binary.version_output (source.tag)";
+         .binary.version_output == ("jankurai " + (.source.tag | ltrimstr("v")))),
+       check("source.asset"; .source.asset ==
+         ("jankurai-" + (.source.tag | ltrimstr("v")) + "-" + $target_triple + ".tar.gz")),
+       check("source.commit"; .source.commit | hex(40)),
+       check("source.tree"; .source.tree | hex(40)),
+       check("source.archive_sha256"; .source.archive_sha256 | hex(64)),
+       check("source.provenance_sha256"; .source.provenance_sha256 | hex(64)),
+       check("source.cargo_lock_sha256"; .source.cargo_lock_sha256 | hex(64)),
+       check("source.family_lock_sha256"; .source.family_lock_sha256 | hex(64)),
+       check("source.verification"; .source.verification as $v |
+         $v == "release-key-signed" or ($test_mode and $v == "test-fixture")),
+       check("signature.scheme"; .signature.scheme == "cosign-key-offline"),
+       check("signature.verified";
+         .signature.verified == (.source.verification == "release-key-signed")),
+       check("signature.signer_sha256"; .signature.signer_sha256 == $signer_sha256),
+       check("signature.cosign_sha256"; .signature.cosign_sha256 == $cosign_sha256),
+       check("build.mode"; .build.mode == "public-release-key-signed-v1"),
+       check("build.target_triple"; .build.target_triple == $target_triple),
+       check("build.rustc"; .build.rustc | toolchain("rustc")),
+       check("build.cargo"; .build.cargo | toolchain("cargo"))'
         ;;
       jeryu.jankurai-installation/v2)
-        receipt_filter='(.source.remote | type == "string" and startswith("https://")) and
-       (.source.commit | hex(40)) and (.source.tree | hex(40)) and
-       (.source.tag | text) and
-       (.source.archive_sha256 | hex(64)) and
-       (.source.cargo_lock_sha256 | hex(64)) and
-       .source.verification == $verification and
-       (.build.rustc | toolchain("rustc")) and (.build.cargo | toolchain("cargo")) and
-       (.build.target_triple | text) and (.build.mode | text) and
-       ([.build.package_path, .build.builder_image_id, .build.linker, .build.glibc,
-         .build.vendor_files_sha256,
-         .build.cargo_config_sha256, .build.environment, .build.rustflags,
-         .build.command] | all(text)) and
-       (.build.vendor_file_count | count) and
-       (.build.context_sha256 | hex(64)) and
-       (.build.builder_image | text and test("@sha256:[0-9a-f]{64}$")) and
-       .build.cargo_net_offline == true and .build.closed_vendor == true and
-       .build.network_none == true and .build.read_only_root == true and
-       .build.non_root == true and .build.capabilities_dropped == true and
-       .build.no_new_privileges == true and
-       .build.container_engine_path == "/usr/bin/docker" and
-       .build.git_global_config_disabled == true and .build.git_system_config_disabled == true and
-       .build.git_http_follow_redirects == false and .build.git_terminal_prompt == false and
-       .build.jankurai_update_check == false and
-       .build.network_scope ==
-         "local-forge-source-plus-closed-vendor-network-none"'
+        receipt_checks='check("source.remote"; .source.remote | text and startswith("https://")),
+       check("source.commit"; .source.commit | hex(40)),
+       check("source.tree"; .source.tree | hex(40)),
+       check("source.tag"; .source.tag | text),
+       check("source.archive_sha256"; .source.archive_sha256 | hex(64)),
+       check("source.cargo_lock_sha256"; .source.cargo_lock_sha256 | hex(64)),
+       check("source.verification"; .source.verification == $verification),
+       check("build.rustc"; .build.rustc | toolchain("rustc")),
+       check("build.cargo"; .build.cargo | toolchain("cargo")),
+       check("build.target_triple"; .build.target_triple | text),
+       check("build.mode"; .build.mode | text),
+       check("build.package_path"; .build.package_path | text),
+       check("build.builder_image_id"; .build.builder_image_id | text),
+       check("build.linker"; .build.linker | text),
+       check("build.glibc"; .build.glibc | text),
+       check("build.vendor_files_sha256"; .build.vendor_files_sha256 | text),
+       check("build.vendor_file_count"; .build.vendor_file_count | count),
+       check("build.cargo_config_sha256"; .build.cargo_config_sha256 | text),
+       check("build.environment"; .build.environment | text),
+       check("build.rustflags"; .build.rustflags | text),
+       check("build.command"; .build.command | text),
+       check("build.context_sha256"; .build.context_sha256 | hex(64)),
+       check("build.builder_image"; .build.builder_image | text and test("@sha256:[0-9a-f]{64}$")),
+       check("build.cargo_net_offline"; .build.cargo_net_offline == true),
+       check("build.closed_vendor"; .build.closed_vendor == true),
+       check("build.network_none"; .build.network_none == true),
+       check("build.read_only_root"; .build.read_only_root == true),
+       check("build.non_root"; .build.non_root == true),
+       check("build.capabilities_dropped"; .build.capabilities_dropped == true),
+       check("build.no_new_privileges"; .build.no_new_privileges == true),
+       check("build.container_engine_path"; .build.container_engine_path == "/usr/bin/docker"),
+       check("build.git_global_config_disabled"; .build.git_global_config_disabled == true),
+       check("build.git_system_config_disabled"; .build.git_system_config_disabled == true),
+       check("build.git_http_follow_redirects"; .build.git_http_follow_redirects == false),
+       check("build.git_terminal_prompt"; .build.git_terminal_prompt == false),
+       check("build.jankurai_update_check"; .build.jankurai_update_check == false),
+       check("build.network_scope"; .build.network_scope ==
+         "local-forge-source-plus-closed-vendor-network-none")'
         ;;
-      *) continue ;;
+      *)
+        rejected_receipts+=("${receipt}: unsupported schema ${receipt_schema:-<none>}")
+        continue
+        ;;
     esac
-    if jq -e \
+    if ! receipt_failed="$(jq -r \
       --arg digest "${actual_sha}" \
       --arg release_repo "${pinned_release_repo}" \
       --arg signer_sha256 "${pinned_signer_sha256}" \
@@ -237,27 +296,27 @@ require_jankurai() {
       --arg protection "${expected_protection}" \
       --argjson protected_main "${expected_protected}" \
       --argjson test_mode "${expected_test}" \
-      "${receipt_defs}(${receipt_filter})"' and
-       .governance.status == $governance and
-       .governance.manifest_repo ==
-         "https://git.neverhuman.org/git/jeryu/jeryu-tool.git" and
-       (.governance.manifest_commit | test("^[0-9a-f]{40}$")) and
-       (.governance.manifest_tree | test("^[0-9a-f]{40}$")) and
-       (.governance.manifest_sha256 | test("^[0-9a-f]{64}$")) and
-       .governance.protected_main == $protected_main and
-       .governance.protection_policy == $protection and
-       .binary.sha256 == $digest and .binary.version_output == $version and
-       .installation.path == $path and .installation.atomic == true and
-       .test_mode == $test_mode and .conclusion == "success"' "${receipt}" >/dev/null 2>&1; then
-      export JERYU_JANKURAI_RECEIPT="${receipt}"
-      export JERYU_JANKURAI_RECEIPT_SHA256="${receipt_digest}"
-      found_receipt=1
-      break
+      "${receipt_defs}[${receipt_checks}, ${receipt_common}] | join(\", \")" \
+      "${receipt}" 2>&1)"; then
+      printf 'governed jankurai receipt verifier failed on %s: %s\n' \
+        "${receipt}" "${receipt_failed//$'\n'/ }" >&2
+      exit 1
     fi
+    if [[ -n "${receipt_failed}" ]]; then
+      rejected_receipts+=("${receipt}: ${receipt_schema} receipt failed ${receipt_failed}")
+      continue
+    fi
+    export JERYU_JANKURAI_RECEIPT="${receipt}"
+    export JERYU_JANKURAI_RECEIPT_SHA256="${receipt_digest}"
+    found_receipt=1
+    break
   done
   if [[ "${mode}" != "release-broker" && "${found_receipt}" -ne 1 ]]; then
     printf 'governed jankurai receipt mismatch: binary=%s sha256=%s test_mode=%s\n' \
       "${bin}" "${actual_sha}" "${expected_test}" >&2
+    if (( ${#rejected_receipts[@]} > 0 )); then
+      printf '  rejected %s\n' "${rejected_receipts[@]}" >&2
+    fi
     exit 1
   fi
 
@@ -267,6 +326,8 @@ require_jankurai() {
   # fails closed on its own, so no caller ever sees these variables unset after
   # require_jankurai has returned.
   if [[ -n "${JERYU_JANKURAI_RECEIPT:-}" && "${mode}" != "release-broker" ]]; then
+    # The lines are collected before any is printed, so a failing field leaves
+    # jq's own message as the only output.
     receipt_export_program='
       def q($field):
         if type == "string" and length > 0 then @sh
@@ -290,7 +351,8 @@ require_jankurai() {
       "export JERYU_JANKURAI_CARGO_VERSION=\(.build.cargo|q("build.cargo"))",
       "export JERYU_JANKURAI_TARGET_TRIPLE=\(.build.target_triple|q("build.target_triple"))",
       "export JERYU_JANKURAI_BUILD_MODE=\(.build.mode|q("build.mode"))",
-      "export JERYU_JANKURAI_VERIFICATION=\(.source.verification|q("source.verification"))",
+      "export JERYU_JANKURAI_VERIFICATION=\(if .test_mode == true then "diagnostic-candidate"
+        else .source.verification end | q("source.verification"))",
       if .schema == "jeryu.jankurai-installation/v3" then
         "export JERYU_JANKURAI_RELEASE_ASSET=\(.source.asset|q("source.asset"))",
         "export JERYU_JANKURAI_RELEASE_ASSET_SHA256=\(.source.archive_sha256|q("source.archive_sha256"))",
@@ -312,11 +374,10 @@ require_jankurai() {
         "export JERYU_JANKURAI_BUILD_COMMAND=\(.build.command|q("build.command"))",
         "export JERYU_JANKURAI_BUILD_CONTEXT_SHA256=\(.build.context_sha256|q("build.context_sha256"))"
       end'
-    if ! receipt_exports="$(jq -er "${receipt_export_program}" "${JERYU_JANKURAI_RECEIPT}" 2>/dev/null)"; then
+    if ! receipt_exports="$(jq -r "[${receipt_export_program}] | .[]" \
+        "${JERYU_JANKURAI_RECEIPT}" 2>&1)"; then
       printf 'governed jankurai receipt %s cannot export its identity: %s\n' \
-        "${JERYU_JANKURAI_RECEIPT}" \
-        "$(jq -er "${receipt_export_program}" "${JERYU_JANKURAI_RECEIPT}" 2>&1 >/dev/null |
-          head -n 1)" >&2
+        "${JERYU_JANKURAI_RECEIPT}" "${receipt_exports//$'\n'/ }" >&2
       exit 1
     fi
     eval "${receipt_exports}"
