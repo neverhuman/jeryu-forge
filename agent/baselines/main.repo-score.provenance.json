@@ -1,31 +1,31 @@
 {
   "schema": "jeryu.jankurai-baseline-provenance/v1",
   "repository": "jeryu/jeryu",
-  "generated_at": "2026-10-14T15:50:26Z",
+  "generated_at": "2026-10-14T19:51:01Z",
   "source": {
     "branch": "main",
-    "commit": "d974eb628a94ea0a99cc19ffc0afd041815ea9db",
-    "tree": "823dde5ae6adbef8c3a731ad6cad0a871670fa6e",
+    "commit": "9d032593c859be6d57b52d598dfd7541368aa093",
+    "tree": "c7e31e2d18875a82ec009e331d1c0c268464fd04",
     "dirty_worktree": true,
-    "isolation": "clone-no-local-no-hardlinks-no-tags"
+    "isolation": "clone-no-tags-from-forge"
   },
   "jankurai": {
-    "version": "jankurai 1.7.4",
-    "source_tag": "v1.7.4",
-    "binary_sha256": "17a39b5275c1f4bfb4279c461e0945d151b5b0eae5356a109a1b846eb5639c1e",
+    "version": "jankurai 1.7.5",
+    "source_tag": "v1.7.5",
+    "binary_sha256": "d2414884a3dbe1cc2d02b4240588869f6afac26ff0f167829e907b1617501121",
     "installation": "governed, jeryu.jankurai-installation/v3 receipt"
   },
   "command": "jankurai audit . --full --mode advisory --policy agent/audit-policy.toml --json agent/baselines/main.repo-score.json --no-score-history",
   "policy": {
     "path": "agent/audit-policy.toml",
     "overlay": true,
-    "sha256": "efaed14680d690e2fea049100ee782bded391457ef65f42848cd411a93f6423f",
-    "source_commit_policy_sha256": "e0df39f2eca7099324b246166f7a837f066b7d4ac8c89d57af1b7a2f16b790be",
+    "sha256": "b913496ea2042c30ee37393abfad8afa06943023f16a42d2336cb723602d80b9",
+    "source_commit_policy_sha256": "efaed14680d690e2fea049100ee782bded391457ef65f42848cd411a93f6423f",
     "reason": "the ratchet refuses a baseline audited under a different policy; protected main is audited with the policy this change renders (only required_tool_version differs), overlaid on the clean clone and removed afterwards"
   },
   "report": {
     "path": "agent/baselines/main.repo-score.json",
-    "sha256": "53b8b1331d1fd72ee7cc907aaafd4fce37156d4b577164480dbcd9daee0fa814",
+    "sha256": "a3fb5fa728da82cbcda02fca116db7043916450392ac8950b8edd7476110de18",
     "normalization": "single-trailing-lf-added-for-tracked-text-file",
     "mode": "full",
     "score": 88,

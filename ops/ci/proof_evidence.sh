@@ -21,14 +21,16 @@ if ! git rev-parse --verify "${base_ref}^{commit}" >/dev/null 2>&1; then
 fi
 git rev-parse --verify "${base_ref}^{commit}" >/dev/null
 baseline_commit="$(jq -er '.source.commit' "$provenance")"
-if ! git merge-base --is-ancestor "$baseline_commit" HEAD; then
-  printf 'ratchet baseline commit %s is not an ancestor of HEAD\n' "$baseline_commit" >&2
-  exit 1
-fi
+# Validate the shape before git sees the value: a ref name, an option-like
+# string or an abbreviated sha never reaches `git merge-base`.
 [[ "$baseline_commit" =~ ^[0-9a-f]{40}$ ]] || {
   printf 'ratchet baseline provenance must name a full commit sha: %s\n' "$baseline_commit" >&2
   exit 1
 }
+if ! git merge-base --is-ancestor "$baseline_commit" HEAD; then
+  printf 'ratchet baseline commit %s is not an ancestor of HEAD\n' "$baseline_commit" >&2
+  exit 1
+fi
 # Jankurai 1.7 records the full 40-char head; an abbreviated head is a stale
 # (pre-1.7) baseline and must be regenerated, never matched by prefix.
 baseline_head="$(jq -er '.git.head' "$baseline")"
@@ -37,6 +39,40 @@ baseline_head="$(jq -er '.git.head' "$baseline")"
     "$baseline_head" "$baseline_commit" >&2
   exit 1
 }
+sha256_of() { sha256sum | cut -d' ' -f1; }
+# The provenance names the exact report bytes it describes.
+[[ "$(jq -er '.report.sha256' "$provenance")" == "$(sha256_of <"$baseline")" ]] || {
+  printf 'baseline report bytes do not match the digest in its provenance\n' >&2
+  exit 1
+}
+# A baseline audited on a dirty tree is accepted only as the declared policy
+# overlay, and the overlay is checked here rather than taken on trust: the
+# overlaid policy must be this commit's agent/audit-policy.toml byte for byte,
+# and the source digest must be the policy at the audited commit. Any other
+# dirty baseline is refused.
+report_dirty="$(jq -r '(.dirty_worktree // false) or (.git.dirty_worktree // false)' "$baseline")"
+provenance_dirty="$(jq -r '.source.dirty_worktree // false' "$provenance")"
+[[ "$report_dirty" == "$provenance_dirty" ]] || {
+  printf 'baseline report dirty_worktree=%s disagrees with its provenance (%s)\n' \
+    "$report_dirty" "$provenance_dirty" >&2
+  exit 1
+}
+if [[ "$report_dirty" == true ]]; then
+  jq -e '.policy.overlay == true and .policy.path == "agent/audit-policy.toml"' \
+    "$provenance" >/dev/null || {
+    printf 'baseline audited a dirty tree without a declared policy overlay\n' >&2
+    exit 1
+  }
+  [[ "$(jq -er '.policy.sha256' "$provenance")" == "$(sha256_of <agent/audit-policy.toml)" ]] || {
+    printf 'baseline policy overlay is not this commit'"'"'s agent/audit-policy.toml\n' >&2
+    exit 1
+  }
+  [[ "$(jq -er '.policy.source_commit_policy_sha256' "$provenance")" == \
+    "$(git show "${baseline_commit}:agent/audit-policy.toml" | sha256_of)" ]] || {
+    printf 'baseline source policy digest is not agent/audit-policy.toml at %s\n' "$baseline_commit" >&2
+    exit 1
+  }
+fi
 
 rm -rf target/jankurai/proofbind target/jankurai/security \
   target/jankurai/accepted-baseline.json target/jankurai/repo-score.json \
