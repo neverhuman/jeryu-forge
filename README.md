@@ -8,8 +8,9 @@ Jeryu is a self-hosted forge — repositories, pull requests, checks, CI,
 reviews, gated merges, and releases — with agents as first-class users. It
 speaks GitHub's REST dialect (the real `gh` CLI works against it) and runs your
 CI on your own hardware. The Jeryu family itself is developed on the hosted
-forge at **https://git.jeryu.ai** (the older name `git.neverhuman.org` still
-serves git and the API).
+forge at **https://git.neverhuman.org**. The same forge answers in a browser as
+`git.jeryu.ai`; every script and default in this repository uses
+`git.neverhuman.org`, so the commands below do too.
 
 ## Why Jeryu exists
 
@@ -21,13 +22,13 @@ recorded as a decision in `jeryu-deploy/docs/adr/`.
 
 | Problem at agent scale | What Jeryu does |
 | --- | --- |
-| Evidence minted outside the system of record cannot be trusted | The forge is the origin and the only authority; mirrors are downstream ([ADR 0001](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0001-forge-is-origin-github-is-a-downstream-mirror.md)). |
-| A green check on an old head says nothing about the merge | `main` moves only through a gated merge that requires the required context green at the exact head, run on a dedicated gate host with a warm cache ([ADR 0003](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0003-gating-runs-on-a-dedicated-gate-host.md)). |
-| Every merge turns every other open PR into a rebase and a re-gate | A merge queue batches and replays heads so people and agents stop paying rebase cycles ([merge queue](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/merge-queue.md)). |
-| The tool that judges code can itself be changed by the code under test | One governed auditor identity, installed from a receipt and pinned centrally, produces every audit and proof ([ADR 0011](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0011-central-approved-release-pin-for-the-governed-auditor.md), [ADR 0012](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0012-authenticate-auditor-anchor-rotation-and-bootstrap.md)). |
-| Agents act under borrowed human logins | Agents are accounts: scoped tokens, one MCP endpoint, bots owned by an account or an organization, and a presence registry ([ADR 0005](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0005-one-mcp-endpoint-scoped-agent-tokens.md), [0006](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0006-agent-presence-on-the-repo-agents-tab.md), [0008](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0008-team-bots-owned-by-an-organization.md), [0009](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0009-organizations-with-owners-and-teams.md)). |
-| Nobody can see the delivery line as a whole, only one PR at a time | A pipeline event log feeds Flow (where work sits and backs up), Yield (what it cost), and Scorecard (lead time, escaped defects, recovery, cost per successful change) ([ADR 0004](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0004-flow-shows-where-work-sits-and-backs-up.md), [ADR 0010](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0010-judge-delivery-by-outcomes.md), [ADR 0013](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0013-show-flow-decisions-and-delivery-evidence.md)). |
-| Activity counts reward busy systems, not working ones | Volume is never shown without a quality guardrail beside it, and missing evidence is shown as unknown, never as zero ([scorecard](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/scorecard.md)). |
+| Evidence minted outside the system of record cannot be trusted | The forge is the origin and the only authority; mirrors are downstream ([ADR 0001](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0001-forge-is-origin-github-is-a-downstream-mirror.md)). |
+| A green check on an old head says nothing about the merge | `main` moves only through a gated merge that requires the required context green at the exact head, run on a dedicated gate host with a warm cache ([ADR 0003](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0003-gating-runs-on-a-dedicated-gate-host.md)). |
+| Every merge turns every other open PR into a rebase and a re-gate | A merge queue batches and replays heads so people and agents stop paying rebase cycles ([merge queue](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/merge-queue.md)). |
+| The tool that judges code can itself be changed by the code under test | One governed auditor identity, installed from a receipt and pinned centrally, produces every audit and proof ([ADR 0011](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0011-central-approved-release-pin-for-the-governed-auditor.md), [ADR 0012](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0012-authenticate-auditor-anchor-rotation-and-bootstrap.md)). |
+| Agents act under borrowed human logins | Agents are accounts: scoped tokens, one MCP endpoint, bots owned by an account or an organization, and a presence registry ([ADR 0005](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0005-one-mcp-endpoint-scoped-agent-tokens.md), [0006](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0006-agent-presence-on-the-repo-agents-tab.md), [0008](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0008-team-bots-owned-by-an-organization.md), [0009](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0009-organizations-with-owners-and-teams.md)). |
+| Nobody can see the delivery line as a whole, only one PR at a time | A pipeline event log feeds Flow (where work sits and backs up), Yield (what it cost), and Scorecard (lead time, escaped defects, recovery, cost per successful change) ([ADR 0004](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0004-flow-shows-where-work-sits-and-backs-up.md), [ADR 0010](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0010-judge-delivery-by-outcomes.md), [ADR 0013](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/0013-show-flow-decisions-and-delivery-evidence.md)). |
+| Activity counts reward busy systems, not working ones | Volume is never shown without a quality guardrail beside it, and missing evidence is shown as unknown, never as zero ([scorecard](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/scorecard.md)). |
 
 The useful measure is verified changes that reach production per unit of
 time, not agents running or lines written. Jeryu's pages are built to report
@@ -47,8 +48,8 @@ endpoint. Neither gets a shortcut.
   MCP client at the forge with a scoped agent token, or start a sandboxed
   session from the web UI. The agent is its own account with its own reach,
   its cost is recorded beside the fleet's, and its PR is gated like any other.
-  Start at [connect an agent](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/connect-an-agent.md)
-  and [bots](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/bots.md).
+  Start at [connect an agent](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/connect-an-agent.md)
+  and [bots](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/bots.md).
 
 What stays with people by design: deciding what to build, approving a release,
 and activating a deployment.
@@ -63,7 +64,7 @@ and activating a deployment.
   linear-history gating, and a merge endpoint that refuses to move `main`
   without green checks (`main` only advances through gated merges).
 - **GitHub-compatible REST edge** — point `gh`, scripts, or CI at your
-  forge's URL (for the family itself, `https://git.jeryu.ai`).
+  forge's URL (for the family itself, `https://git.neverhuman.org`).
 - **Local CI, your runners** — workflows compile to an IR and run host-native
   or in containers; adversarial suites (sandbox-escape and cache-poisoning
   matrices) guard the substrate itself.
@@ -78,13 +79,13 @@ and activating a deployment.
   `main` tip to `github.com/<your-org>` after each merge and record the result
   as a `jeryu/github-mirror` check-run. A failed push never blocks the merge.
   On the family's own host no mirror push has succeeded yet, so the
-  `github.com/neverhuman/*` copies are stale. Use `git.jeryu.ai` as the
+  `github.com/neverhuman/*` copies are stale. Use `git.neverhuman.org` as the
   source of truth.
 
 ## Install
 
 ```bash
-git clone https://git.jeryu.ai/git/jeryu/jeryu.git
+git clone https://git.neverhuman.org/git/jeryu/jeryu.git
 JERYU_VERSION=jeryu-v5.0.0-split.0 bash jeryu/scripts/install.sh
 ```
 
@@ -121,9 +122,9 @@ issuer must be an `https` url. The verifier is always the `cosign` on `PATH`. `J
 
 ## Quickstart
 
-The family's live forge is https://git.jeryu.ai. Open it in a browser
+The family's live forge is https://git.neverhuman.org. Open it in a browser
 for repos, PRs, checks, and agent sessions, or point `gh` and scripts at it.
-Git remotes use the form `https://git.jeryu.ai/git/jeryu/<repo>.git`.
+Git remotes use the form `https://git.neverhuman.org/git/jeryu/<repo>.git`.
 
 To run your own forge, start `jeryu serve` behind your own hostname and point
 clients at that URL.
@@ -134,7 +135,7 @@ Product source lives in the split member repositories; this portal carries the
 installer, the clone entrypoint, and audit metadata. To hack on Jeryu itself:
 
 ```bash
-git clone https://git.jeryu.ai/git/jeryu/jeryu.git
+git clone https://git.neverhuman.org/git/jeryu/jeryu.git
 cd jeryu
 scripts/clone-family.sh "$HOME/jeryu-split"
 ```
@@ -180,14 +181,16 @@ already-cloned portal checkout.
 The family list of record is `required_repos` in
 `jeryu-release-ops/repos.manifest.toml`; this table follows it.
 
-The release authority is `neverhuman/jeryu-deploy`. Cross-repo Rust
+The release authority is `jeryu-deploy` (forge path `jeryu/jeryu-deploy`;
+its GitHub mirror is `neverhuman/jeryu-deploy`). Cross-repo Rust
 dependencies are pinned `*-v5.0.0-split.0` git tags; see `docs/architecture.md`
 for how the family fits together.
 
 ## Release Evidence
 
 Release receipts, binary checksums, SBOMs, provenance, witness artifacts, and
-rollback evidence are published by `neverhuman/jeryu-deploy`:
+rollback evidence are published on the GitHub mirror of `jeryu-deploy`,
+`neverhuman/jeryu-deploy`:
 
 - https://github.com/neverhuman/jeryu-deploy/releases
 - `SHA256SUMS`
@@ -208,12 +211,12 @@ rollback evidence are published by `neverhuman/jeryu-deploy`:
 
 The design lives in `jeryu-deploy`, the integration and release authority:
 
-- [Architecture decision records](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/README.md) — every cross-cutting decision, with its context and its price.
-- [Pipeline events and the attention inbox](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/pipeline-events.md) — the contract that makes the whole line visible.
-- [Flow](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/flow.md) and [Scorecard](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/scorecard.md) — where work waits, and whether what ships lasts.
-- [Merge queue](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/merge-queue.md) — why linear history needs a queue and how replay works.
-- [Connect an agent](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/connect-an-agent.md), [bots](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/bots.md) and the [agent native standard](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/agent-native-standard.md) — how an agent gets in and how it is expected to work.
-- [Governed auditor](https://git.jeryu.ai/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/governed-jankurai.md) — how the auditor is installed, pinned and verified.
+- [Architecture decision records](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/adr/README.md) — every cross-cutting decision, with its context and its price.
+- [Pipeline events and the attention inbox](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/pipeline-events.md) — the contract that makes the whole line visible.
+- [Flow](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/flow.md) and [Scorecard](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/scorecard.md) — where work waits, and whether what ships lasts.
+- [Merge queue](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/merge-queue.md) — why linear history needs a queue and how replay works.
+- [Connect an agent](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/connect-an-agent.md), [bots](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/bots.md) and the [agent native standard](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/agent-native-standard.md) — how an agent gets in and how it is expected to work.
+- [Governed auditor](https://git.neverhuman.org/repos/jeryu/jeryu/jeryu-deploy/blob/main/docs/governed-jankurai.md) — how the auditor is installed, pinned and verified.
 
 ## License
 
