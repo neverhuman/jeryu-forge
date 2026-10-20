@@ -20,7 +20,7 @@ source "${script_dir}/lib/release-config.sh"
 jeryu_load_release_config
 default_dest="$(cd "${repo_root}/.." && pwd)"
 dest="${1:-$default_dest}"
-forge="${JERYU_FORGE_BASE:-https://git.neverhuman.org}"
+forge="${JERYU_FORGE_BASE:-https://git.jeryu.ai}"
 control_plane="jeryu-release-ops"
 portal="jeryu"
 

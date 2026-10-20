@@ -34,7 +34,10 @@ except ModuleNotFoundError:
 with open(sys.argv[1], "rb") as fh:
     data = tomllib.load(fh)
 
-repos = data.get("repo", [])
+repos = list(data.get("repo", []))
+control = data.get("control_plane", {})
+if control.get("name") and not any(r.get("name") == control["name"] for r in repos):
+    repos.insert(0, control)
 if not repos:
     raise SystemExit("manifest has no [[repo]] entries")
 
