@@ -1,0 +1,9 @@
+{
+  "rule": "claim_requires_ready",
+  "report": {
+    "prior_state": "Ready",
+    "in_ready_queue": true,
+    "epoch_matches": true,
+    "already_claimed": true
+  }
+}

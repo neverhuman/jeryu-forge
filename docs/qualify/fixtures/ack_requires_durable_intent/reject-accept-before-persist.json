@@ -1,0 +1,8 @@
+{
+  "rule": "ack_requires_durable_intent",
+  "report": {
+    "persist": "durable",
+    "run_id_source": "durable",
+    "accepted_before_persist": true
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "rule": "signature_required",
+  "report": {
+    "version": "jeryu-v5.0.0-split.0",
+    "checksum_only": false,
+    "cosign": "verified",
+    "signer": "https://github.com/neverhuman/jeryu-deploy/.github/workflows/ci.yml@refs/heads/main"
+  }
+}

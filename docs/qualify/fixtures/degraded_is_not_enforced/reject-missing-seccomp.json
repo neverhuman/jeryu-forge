@@ -1,0 +1,11 @@
+{
+  "rule": "degraded_is_not_enforced",
+  "report": {
+    "trust": "untrusted",
+    "launch": "success",
+    "landlock": true,
+    "seccomp": false,
+    "no_new_privs": true,
+    "cgroup": true
+  }
+}

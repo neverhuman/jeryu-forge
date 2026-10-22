@@ -1,0 +1,8 @@
+{
+  "rule": "family_lock_pins_oids",
+  "report": {
+    "members": {
+      "jeryu-core": "jeryu-v5.0.0-split.0"
+    }
+  }
+}

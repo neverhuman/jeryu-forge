@@ -1,0 +1,9 @@
+{
+  "rule": "repo_scope_required",
+  "report": {
+    "repo_status": "unknown",
+    "decision": "allow",
+    "authorized_repo": "neverhuman/jeryu",
+    "query_scope": "neverhuman/jeryu"
+  }
+}

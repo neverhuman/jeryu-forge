@@ -1,0 +1,9 @@
+{
+  "rule": "signature_required",
+  "report": {
+    "version": "latest",
+    "checksum_only": false,
+    "cosign": "verified",
+    "signer": "https://github.com/neverhuman/jeryu-deploy/.github/workflows/release.yml@refs/heads/main"
+  }
+}
