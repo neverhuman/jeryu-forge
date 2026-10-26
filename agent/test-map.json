@@ -50,6 +50,11 @@
       "lane": "score",
       "purpose": "verify release notes stay routed through the score lane"
     },
+    "CONTRIBUTING.md": {
+      "command": "just check",
+      "lane": "check",
+      "purpose": "verify contribution guidance stays current"
+    },
     "Cargo.lock": {
       "command": "just check",
       "lane": "check",
@@ -74,6 +79,11 @@
       "command": "just check",
       "lane": "check",
       "purpose": "verify root navigation remains current"
+    },
+    "SECURITY.md": {
+      "command": "just check",
+      "lane": "check",
+      "purpose": "verify the vulnerability-reporting policy stays current"
     },
     "VERSION": {
       "command": "just score",
