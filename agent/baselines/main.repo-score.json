@@ -1,21 +1,21 @@
 {
-  "report_fingerprint": "sha256:edb6e6ff50bca3c4c532dc2be11e5caf5b6abc7576d8fac41efe91ae96dbe75d",
-  "input_fingerprint": "sha256:450e006b1a821bc14f1cf5a68fea2a3f5af941fb12619f79a8a1f471421c74b9",
-  "policy_fingerprint": "sha256:6a3bfc6fd2a3cc99db0133e7a3b7ea058633014524ecd0e4819b07f32c548e45",
+  "report_fingerprint": "sha256:9da89d5da87b03b646b097036a96376aa26268afa4d3e44c194ac482ae4aa591",
+  "input_fingerprint": "sha256:06a804136e4326aaf2ab69687a58c2c093afd7208465f5168146ac1511536d23",
+  "policy_fingerprint": "sha256:5676b05f70a4e2b5c703aafce0a1050851de24b972afb97fc194d2c5a77d4a83",
   "manifest_fingerprints": {
-    "owner_map": "sha256:9ff632c042934b4b8886ebf025e3337c58abcb2f8871697016d6c2fd0825f26d",
-    "test_map": "sha256:c59b71e2e4225ce545e97a9a5f1286dbd60aa46e75ea8960c6aefb9176a8f3cf",
+    "owner_map": "sha256:07bac2c2551e83afd03cc5056823bce1cea7ed76c55ae46a9a848786be5a97cf",
+    "test_map": "sha256:d50b60fe2def521f797f2ee0faeda8d193cf991d84d86c5cd7825b12bc724416",
     "generated_zones": "sha256:fb8b3442b1881ffe6be60c29aff0198e9d2ce82c7f6f64bc3b0de04b6d7f25a6",
     "boundaries": "sha256:3c2f0d6946f2dfa0f70be829b8547ab511138b00bab2c546eb2ef01c45a9a474",
     "proof_lanes": "sha256:56ac808a36c90601cf92c4f18daca66d5cf736b4a1f7f9bdf01c78761780b3c1",
     "standard_version": "sha256:6bfbdf03d4da39c64a66f5464c5a325994d06d7ca01d3e1e97dc5ebea84f28b6"
   },
   "dirty_worktree": true,
-  "generated_at": "1792007461",
+  "generated_at": "1793331214",
   "schema_url": "schemas/repo-score.schema.json",
   "standard": "jankurai",
   "standard_version": "0.9.0",
-  "auditor_version": "1.7.5",
+  "auditor_version": "1.7.6",
   "schema_version": "1.9.0",
   "paper_edition": "2026.05-ed8",
   "target_stack_id": "rust-ts-vite-react-postgres-bounded-python",
@@ -25,9 +25,9 @@
   "conformance_decision": "review",
   "conformance_blockers": [],
   "repo": ".",
-  "run_id": "1792007461",
-  "started_at": "1792007461",
-  "elapsed_ms": 292,
+  "run_id": "1793331214",
+  "started_at": "1793331214",
+  "elapsed_ms": 434,
   "scope": {
     "mode": "full",
     "paths": []
@@ -54,7 +54,7 @@
     }
   },
   "git": {
-    "head": "9d032593c859be6d57b52d598dfd7541368aa093",
+    "head": "9eb0702446dcbae19f29c5835188560dcb633fd9",
     "base": null,
     "changed_files": 0,
     "mode": "full",
@@ -73,7 +73,7 @@
     ],
     "mode": "advisory",
     "standard_version": "0.9.0",
-    "auditor_version": "1.7.5",
+    "auditor_version": "1.7.6",
     "schema_version": "1.9.0",
     "paper_edition": "2026.05-ed8",
     "target_stack": "rust-ts-vite-react-postgres-bounded-python"
@@ -425,6 +425,7 @@
     "evidence": {
       "accessibility": [
         "agent/baselines/historical/jankurai-1.6.11/main.repo-score.json",
+        "agent/baselines/historical/jankurai-1.7.4/main.repo-score.json",
         "agent/baselines/main.repo-score.json"
       ],
       "api_mocks": [],
@@ -435,6 +436,7 @@
       "playwright_visual": [],
       "storybook": [
         "agent/baselines/historical/jankurai-1.6.11/main.repo-score.json",
+        "agent/baselines/historical/jankurai-1.7.4/main.repo-score.json",
         "agent/baselines/main.repo-score.json"
       ],
       "visual_review": []
@@ -934,9 +936,9 @@
   "copy_code": {
     "schema_version": "1.1.0",
     "generated_by": "jankurai copy-code",
-    "generated_at": "2026-10-14T19:51:01.503137385+00:00",
+    "generated_at": "2026-10-30T03:33:34.021639863+00:00",
     "repo": ".",
-    "auditor_version": "1.7.5",
+    "auditor_version": "1.7.6",
     "status": "pass",
     "policy": {
       "active_source_only": true,
@@ -972,7 +974,7 @@
       ]
     },
     "summary": {
-      "files_scanned": 51,
+      "files_scanned": 56,
       "files_considered": 0,
       "active_files": 0,
       "exact_file_classes": 0,

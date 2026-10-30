@@ -1,31 +1,31 @@
 {
   "schema": "jeryu.jankurai-baseline-provenance/v1",
   "repository": "jeryu/jeryu",
-  "generated_at": "2026-10-14T19:51:01Z",
+  "generated_at": "2026-10-30T03:33:34Z",
   "source": {
     "branch": "main",
-    "commit": "9d032593c859be6d57b52d598dfd7541368aa093",
-    "tree": "c7e31e2d18875a82ec009e331d1c0c268464fd04",
+    "commit": "9eb0702446dcbae19f29c5835188560dcb633fd9",
+    "tree": "5ca7ef037caa9ce6f5582a324c9981d49af72e4c",
     "dirty_worktree": true,
     "isolation": "clone-no-tags-from-forge"
   },
   "jankurai": {
-    "version": "jankurai 1.7.5",
-    "source_tag": "v1.7.5",
-    "binary_sha256": "d2414884a3dbe1cc2d02b4240588869f6afac26ff0f167829e907b1617501121",
+    "version": "jankurai 1.7.6",
+    "source_tag": "v1.7.6",
+    "binary_sha256": "63b445f21ca375ebd9515df49d0095aff6823b731121102651caf4e57cef1cf9",
     "installation": "governed, jeryu.jankurai-installation/v3 receipt"
   },
   "command": "jankurai audit . --full --mode advisory --policy agent/audit-policy.toml --json agent/baselines/main.repo-score.json --no-score-history",
   "policy": {
     "path": "agent/audit-policy.toml",
     "overlay": true,
-    "sha256": "b913496ea2042c30ee37393abfad8afa06943023f16a42d2336cb723602d80b9",
-    "source_commit_policy_sha256": "efaed14680d690e2fea049100ee782bded391457ef65f42848cd411a93f6423f",
+    "sha256": "ad0086f72f42205cc6b93ccff0f825d5cc60ca13eaa96b8e4ede4c41edebb601",
+    "source_commit_policy_sha256": "b913496ea2042c30ee37393abfad8afa06943023f16a42d2336cb723602d80b9",
     "reason": "the ratchet refuses a baseline audited under a different policy; protected main is audited with the policy this change renders (only required_tool_version differs), overlaid on the clean clone and removed afterwards"
   },
   "report": {
     "path": "agent/baselines/main.repo-score.json",
-    "sha256": "a3fb5fa728da82cbcda02fca116db7043916450392ac8950b8edd7476110de18",
+    "sha256": "b89c758fed3448d9ab13321dd91260a4f18a8b7c1d9e58da570ff57b828a576b",
     "normalization": "single-trailing-lf-added-for-tracked-text-file",
     "mode": "full",
     "score": 88,
